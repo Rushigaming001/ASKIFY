@@ -739,7 +739,7 @@ const PublicChat = () => {
         </header>
 
         <ScrollArea className="flex-1 chat-scroll" ref={scrollRef}>
-          <div className="p-4 space-y-4">
+          <div className="p-4 space-y-1">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center py-12">
                 <Users className="h-16 w-16 text-muted-foreground/50 mb-4" />
@@ -747,163 +747,157 @@ const PublicChat = () => {
                 <p className="text-muted-foreground">Be the first to say hello!</p>
               </div>
             ) : (
-              messages.map((message) => {
+              messages.map((message, index) => {
                 const isOwnMessage = message.user_id === user?.id;
                 const isDeleted = !!message.deleted_at;
                 const canSeeDeleted = isAdmin;
                 const replyMessage = message.reply_to ? getReplyMessage(message.reply_to) : null;
                 
-                // Hide deleted messages completely for non-admin users
-                if (isDeleted && !canSeeDeleted) {
-                  return null;
-                }
+                if (isDeleted && !canSeeDeleted) return null;
+
+                // Message grouping: same user within 2 minutes
+                const prevMsg = index > 0 ? messages[index - 1] : null;
+                const isGrouped = prevMsg && 
+                  prevMsg.user_id === message.user_id && 
+                  !prevMsg.deleted_at &&
+                  (new Date(message.created_at).getTime() - new Date(prevMsg.created_at).getTime()) < 120000 &&
+                  !message.reply_to;
+
+                // Day separator
+                const showDateSep = index === 0 || isDifferentDay(
+                  messages[index - 1].created_at,
+                  message.created_at
+                );
+
+                const isGif = message.image_url && (
+                  message.image_url.includes('tenor.com') || 
+                  message.image_url.includes('.gif') ||
+                  message.image_url.includes('giphy.com')
+                );
 
                 return (
-                  <div
-                    key={message.id}
-                    className={`flex gap-3 group ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'} ${isDeleted ? 'opacity-50' : ''}`}
-                  >
-                    <Avatar 
-                      className="h-8 w-8 flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-primary transition-all"
-                      onClick={() => setViewingProfile({ userId: message.user_id, userName: message.profiles?.name || 'User' })}
+                  <div key={message.id}>
+                    {showDateSep && (
+                      <DateSeparator date={message.created_at} />
+                    )}
+                    <div
+                      className={`flex gap-2.5 group ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'} ${isDeleted ? 'opacity-50' : ''} ${isGrouped ? 'mt-0.5' : 'mt-3'}`}
                     >
-                      {message.profiles?.avatar_url ? (
-                        <AvatarImage src={message.profiles.avatar_url} alt={message.profiles.name} />
-                      ) : null}
-                      <AvatarFallback className="text-xs bg-muted">
-                        {message.profiles ? getInitials(message.profiles.name) : '??'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'} max-w-[70%]`}>
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className="text-sm font-medium">
-                          {isOwnMessage ? 'You' : (message.profiles?.name || 'Anonymous')}
-                        </span>
-                        {message.user_role && message.user_role !== 'user' && (
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border shadow-sm ${getRoleBadgeStyle(message.user_role)}`}>
-                            {getRoleLabel(message.user_role)}
-                          </span>
-                        )}
-                        <span className="text-xs text-muted-foreground">
-                          {formatTime(message.created_at)}
-                        </span>
-                        {message.edited_at && (
-                          <span className="text-xs text-muted-foreground italic">
-                            (edited)
-                          </span>
-                        )}
-                      </div>
-                      {/* Reply indicator */}
-                      {replyMessage && (
-                        <div className={`text-xs text-muted-foreground mb-1 px-2 py-1 rounded bg-muted/50 border-l-2 border-primary ${isOwnMessage ? 'text-right' : 'text-left'}`}>
-                          <span className="font-medium">↩ {replyMessage.profiles?.name || 'Unknown'}: </span>
-                          <span className="truncate max-w-[150px] inline-block align-bottom">
-                            {replyMessage.content.substring(0, 50)}{replyMessage.content.length > 50 ? '...' : ''}
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex items-start gap-2">
-                        <div
-                          className={`rounded-2xl px-4 py-2 ${
-                            isDeleted 
-                              ? 'bg-destructive/20 text-destructive'
-                              : isOwnMessage
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted text-foreground'
-                          }`}
+                      {/* Avatar - only show for first in group */}
+                      {!isGrouped ? (
+                        <Avatar 
+                          className="h-8 w-8 flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+                          onClick={() => setViewingProfile({ userId: message.user_id, userName: message.profiles?.name || 'User' })}
                         >
-                          {(message as any).image_url && !isDeleted && (
-                            <img 
-                              src={(message as any).image_url} 
-                              alt="Shared" 
-                              className="max-w-[200px] max-h-[200px] rounded-lg mb-2"
-                            />
+                          {message.profiles?.avatar_url ? (
+                            <AvatarImage src={message.profiles.avatar_url} alt={message.profiles.name} />
+                          ) : null}
+                          <AvatarFallback className="text-xs bg-muted">
+                            {message.profiles ? getInitials(message.profiles.name) : '??'}
+                          </AvatarFallback>
+                        </Avatar>
+                      ) : (
+                        <div className="w-8 flex-shrink-0" />
+                      )}
+                      <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'} max-w-[75%]`}>
+                        {!isGrouped && (
+                          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                            <span className="text-sm font-semibold">
+                              {isOwnMessage ? 'You' : (message.profiles?.name || 'Anonymous')}
+                            </span>
+                            {message.user_role && message.user_role !== 'user' && (
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider border shadow-sm ${getRoleBadgeStyle(message.user_role)}`}>
+                                {getRoleLabel(message.user_role)}
+                              </span>
+                            )}
+                            <span className="text-[11px] text-muted-foreground">
+                              {formatTime(message.created_at)}
+                            </span>
+                            {message.edited_at && (
+                              <span className="text-[11px] text-muted-foreground italic">(edited)</span>
+                            )}
+                          </div>
+                        )}
+                        {/* Reply indicator */}
+                        {replyMessage && (
+                          <div className={`text-xs text-muted-foreground mb-1 px-2 py-1 rounded bg-muted/50 border-l-2 border-primary max-w-full`}>
+                            <span className="font-medium">↩ {replyMessage.profiles?.name}: </span>
+                            <span className="truncate">{replyMessage.content.substring(0, 50)}{replyMessage.content.length > 50 ? '...' : ''}</span>
+                          </div>
+                        )}
+                        <div className="flex items-start gap-1">
+                          <div
+                            className={`rounded-2xl ${isGif ? 'p-0 bg-transparent' : 'px-3 py-1.5'} ${
+                              isDeleted 
+                                ? 'bg-destructive/20 text-destructive px-3 py-1.5'
+                                : isGif ? '' 
+                                : isOwnMessage
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-muted text-foreground'
+                            }`}
+                          >
+                            {message.image_url && !isDeleted && (
+                              <img 
+                                src={message.image_url} 
+                                alt={isGif ? 'GIF' : 'Shared'} 
+                                className={`${isGif ? 'max-w-[250px] rounded-xl' : 'max-w-[200px] max-h-[200px] rounded-lg mb-1'}`}
+                              />
+                            )}
+                            {message.content && !isDeleted && (
+                              <p className="text-sm whitespace-pre-wrap break-words">
+                                {renderMessageContent(message.content)}
+                              </p>
+                            )}
+                            {isDeleted && isAdmin && (
+                              <p className="text-sm">
+                                <span className="text-destructive font-medium">[Deleted by {message.deleted_by === message.user_id ? 'user' : 'admin'}]</span>
+                                <br />
+                                <span className="line-through">{message.content}</span>
+                              </p>
+                            )}
+                          </div>
+                          {isDeleted && isAdmin && (
+                            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDismissDeletedMessage(message.id)} title="Remove permanently">
+                              <X className="h-3 w-3" />
+                            </Button>
                           )}
-                          {(message.content || isDeleted) && (
-                            <p className="text-sm whitespace-pre-wrap break-words">
-                              {isDeleted && isAdmin ? (
-                                <>
-                                  <span className="text-destructive font-medium">[Deleted by {message.deleted_by === message.user_id ? 'user' : 'admin'}]</span>
-                                  <br />
-                                  <span className="line-through">{message.content}</span>
-                                </>
-                              ) : (
-                                renderMessageContent(message.content)
-                              )}
-                            </p>
+                          {!isDeleted && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <MoreVertical className="h-3.5 w-3.5" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(message.content); toast({ title: 'Copied' }); }}>
+                                  <Copy className="h-4 w-4 mr-2" />Copy
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setReplyingTo(message)}>
+                                  <Reply className="h-4 w-4 mr-2" />Reply
+                                </DropdownMenuItem>
+                                {(isOwnMessage || isAdmin) && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => handleOwnerEditMessage(message)}>
+                                      <Edit2 className="h-4 w-4 mr-2" />Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleDeleteMessage(message.id, isAdmin && !isOwnMessage)} className="text-destructive">
+                                      <Trash2 className="h-4 w-4 mr-2" />Delete
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                                {isAdmin && !isOwnMessage && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => setModeratingUser({ userId: message.user_id, userName: message.profiles?.name || 'User' })}>
+                                      <Shield className="h-4 w-4 mr-2" />Moderate User
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           )}
                         </div>
-                        {/* Dismiss button for deleted messages (owner only) */}
-                        {isDeleted && isAdmin && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-destructive hover:text-destructive"
-                            onClick={() => handleDismissDeletedMessage(message.id)}
-                            title="Permanently remove"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {/* Message actions dropdown for ALL users */}
-                        {!isDeleted && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  navigator.clipboard.writeText(message.content);
-                                  toast({ title: 'Copied', description: 'Message copied to clipboard' });
-                                }}
-                              >
-                                <Copy className="h-4 w-4 mr-2" />
-                                Copy
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => setReplyingTo(message)}
-                              >
-                                <Reply className="h-4 w-4 mr-2" />
-                                Reply
-                              </DropdownMenuItem>
-                              {(isOwnMessage || isAdmin) && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    onClick={() => handleOwnerEditMessage(message)}
-                                  >
-                                    <Edit2 className="h-4 w-4 mr-2" />
-                                    Edit
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => handleDeleteMessage(message.id, isAdmin && !isOwnMessage)}
-                                    className="text-destructive"
-                                  >
-                                    <Trash2 className="h-4 w-4 mr-2" />
-                                    Delete
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                              {isAdmin && !isOwnMessage && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    onClick={() => setModeratingUser({ 
-                                      userId: message.user_id, 
-                                      userName: message.profiles?.name || 'User' 
-                                    })}
-                                  >
-                                    <Shield className="h-4 w-4 mr-2" />
-                                    Moderate User
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
                       </div>
                     </div>
                   </div>

@@ -25,6 +25,7 @@ import Chess from "./pages/Chess";
 import Ludo from "./pages/Ludo";
 import Games from "./pages/Games";
 import Status from "./pages/Status";
+import Install from "./pages/Install";
 
 const queryClient = new QueryClient(); // v2
 
@@ -72,6 +73,9 @@ const App = () => {
                   <Route path="/learn" element={<LanguageLearning />} />
                   <Route path="/pricing" element={<Pricing />} />
                   <Route path="/status" element={<Status />} />
+                  <Route path="/install" element={<Install />} />
+                  <Route path="/installation" element={<Install />} />
+                  <Route path="/app" element={<Install />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </ChatProvider>
