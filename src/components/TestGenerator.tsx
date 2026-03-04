@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, FileText, Download, Sparkles, GraduationCap, BookOpen, AlertCircle, Upload, RefreshCw } from 'lucide-react';
+import { Loader2, FileText, Download, Sparkles, GraduationCap, BookOpen, AlertCircle, Upload, RefreshCw, Camera } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -126,6 +126,9 @@ export function TestGenerator() {
   const [remakeInput, setRemakeInput] = useState('');
   const [remakeLoading, setRemakeLoading] = useState(false);
   const [customPrompt, setCustomPrompt] = useState('');
+  const [exampleImage, setExampleImage] = useState<string | null>(null);
+  const [exampleLoading, setExampleLoading] = useState(false);
+  const exampleFileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const currentCurriculum = CURRICULUM_BY_CLASS[selectedClass] as unknown as Record<string, Record<string, readonly string[]>>;
@@ -361,6 +364,96 @@ Generate the modified question paper now:`;
     }
   };
 
+  const handleExampleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast({ title: 'Error', description: 'Please select an image file', variant: 'destructive' });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setExampleImage(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const generateFromExample = async () => {
+    if (!exampleImage) {
+      toast({ title: 'Error', description: 'Please upload a paper image first', variant: 'destructive' });
+      return;
+    }
+
+    setExampleLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast({ title: 'Error', description: 'Please log in', variant: 'destructive' });
+        return;
+      }
+
+      // First, analyze the image to extract the paper content
+      const { data: analysisData, error: analysisError } = await supabase.functions.invoke('image-ai', {
+        body: {
+          action: 'analyze',
+          imageUrl: exampleImage,
+          prompt: `You are an expert Maharashtra State Board exam paper analyzer. Look at this question paper image carefully and extract EVERYTHING:
+
+1. Class and Subject
+2. Total marks and time
+3. All section headers (Section A, B, C, D etc.)
+4. Every single question with its marks
+5. Question types (MCQ, short answer, long answer, etc.)
+6. The exact marks distribution pattern
+
+Output the complete paper content as plain text, preserving the structure exactly.`
+        }
+      });
+
+      if (analysisError) throw analysisError;
+
+      const extractedPaper = analysisData?.analysis;
+      if (!extractedPaper) throw new Error('Could not read the paper image');
+
+      // Now generate a similar paper with different questions
+      const prompt = `You are an expert Maharashtra State Board question paper creator. I have an example paper below. Create a COMPLETELY NEW paper with DIFFERENT questions but following the EXACT SAME format, structure, marks distribution, and difficulty level.
+
+EXAMPLE PAPER (follow this pattern exactly):
+${extractedPaper}
+
+INSTRUCTIONS:
+1. Keep the EXACT same format: same sections, same marks per question, same number of questions
+2. Keep the same subject, class, and total marks
+3. REPLACE ALL questions with NEW, DIFFERENT questions on the same topics/chapters
+4. For MCQs: new questions with new options
+5. For descriptive: different aspects of the same topics
+6. Follow shala.com, balbharti.com, maharastrastudy.com, and BYJU'S exam patterns
+7. Maintain the same difficulty level
+8. End with: ✱✱✱ Best of Luck! ✱✱✱
+
+Generate the new question paper now:`;
+
+      const response = await supabase.functions.invoke('test-generator', {
+        body: { prompt },
+        headers: { Authorization: `Bearer ${session.access_token}` }
+      });
+
+      if (response.error) throw response.error;
+
+      const paper = response.data?.paper;
+      if (!paper) throw new Error('No response generated');
+
+      setGeneratedTest(paper);
+      setActiveTab('result');
+      toast({ title: 'Paper Generated!', description: 'New paper created matching your example format!' });
+    } catch (error: any) {
+      console.error('Error generating from example:', error);
+      toast({ title: 'Error', description: error.message || 'Failed to generate paper from example', variant: 'destructive' });
+    } finally {
+      setExampleLoading(false);
+    }
+  };
+
   const downloadPDF = () => {
     if (!generatedTest) return;
 
@@ -458,20 +551,26 @@ Generate the modified question paper now:`;
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="generate">
-            <Sparkles className="h-4 w-4 mr-2" />
-            Generate
-          </TabsTrigger>
-          <TabsTrigger value="remake">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Remake
-          </TabsTrigger>
-          <TabsTrigger value="result" disabled={!generatedTest}>
-            <FileText className="h-4 w-4 mr-2" />
-            Result
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-2 px-2">
+          <TabsList className="inline-flex w-auto min-w-max gap-1">
+            <TabsTrigger value="generate" className="text-xs sm:text-sm">
+              <Sparkles className="h-4 w-4 mr-1" />
+              Generate
+            </TabsTrigger>
+            <TabsTrigger value="example" className="text-xs sm:text-sm">
+              <Camera className="h-4 w-4 mr-1" />
+              Example Paper
+            </TabsTrigger>
+            <TabsTrigger value="remake" className="text-xs sm:text-sm">
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Remake
+            </TabsTrigger>
+            <TabsTrigger value="result" disabled={!generatedTest} className="text-xs sm:text-sm">
+              <FileText className="h-4 w-4 mr-1" />
+              Result
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Generate Tab */}
         <TabsContent value="generate" className="space-y-6 mt-6">
@@ -726,6 +825,65 @@ Generate the modified question paper now:`;
               </>
             )}
           </Button>
+        </TabsContent>
+
+        {/* Example Paper Tab */}
+        <TabsContent value="example" className="space-y-6 mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Camera className="h-5 w-5" />
+                Generate from Example Paper
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Upload a photo of any question paper and AI will create a new paper with different questions but the same format, marks, and structure.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <input
+                ref={exampleFileRef}
+                type="file"
+                accept="image/*"
+                onChange={handleExampleImageSelect}
+                className="hidden"
+              />
+              <Button
+                onClick={() => exampleFileRef.current?.click()}
+                variant="outline"
+                className="w-full h-16 border-dashed border-2 hover:border-primary hover:bg-primary/5"
+                disabled={exampleLoading}
+              >
+                <Upload className="h-5 w-5 mr-2" />
+                {exampleImage ? 'Change Paper Image' : 'Upload Paper Photo'}
+              </Button>
+
+              {exampleImage && (
+                <div className="space-y-4">
+                  <div className="rounded-xl overflow-hidden border border-border">
+                    <img src={exampleImage} alt="Example paper" className="w-full h-auto max-h-72 object-contain bg-muted/30" />
+                  </div>
+                  <Button
+                    onClick={generateFromExample}
+                    disabled={exampleLoading}
+                    className="w-full h-12"
+                    size="lg"
+                  >
+                    {exampleLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        Analyzing & Generating (10-15s)...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-2 h-5 w-5" />
+                        Generate Similar Paper
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Remake Tab */}
