@@ -48,18 +48,6 @@ export function MathSolver() {
   const { toast } = useToast();
   const { restrictions } = useUserRestrictions();
 
-  // Check if user is restricted from math solver
-  if (restrictions.math_solver_disabled) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          You have been restricted from using the Math Solver. Contact an admin for assistance.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
   // Get available camera devices
   useEffect(() => {
     const getCameras = async () => {
@@ -68,7 +56,6 @@ export function MathSolver() {
         const videoDevices = devices.filter(d => d.kind === 'videoinput');
         setCameraDevices(videoDevices);
         if (videoDevices.length > 0 && !selectedCamera) {
-          // Prefer back camera
           const backCam = videoDevices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('rear'));
           setSelectedCamera(backCam?.deviceId || videoDevices[0].deviceId);
         }
@@ -88,6 +75,18 @@ export function MathSolver() {
       stopCamera();
     };
   }, [showCamera, selectedCamera]);
+
+  // Check if user is restricted from math solver
+  if (restrictions.math_solver_disabled) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          You have been restricted from using the Math Solver. Contact an admin for assistance.
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   const startCamera = async () => {
     try {
@@ -186,57 +185,67 @@ export function MathSolver() {
         body: { 
           action: 'analyze', 
           imageUrl: selectedImage,
-          prompt: `You are an expert Math teacher. Analyze this math problem image and provide a clear, step-by-step solution.
+          prompt: `You are an expert Maharashtra State Board Math teacher. Solve this math problem step-by-step following the answer format used on maharashtra.shala.com, Balbharti textbooks, and BYJU'S.
 
 ${chapterContext}
 
-Provide the solution in this format:
+IMPORTANT FORMATTING RULES:
+- Do NOT use any asterisks (*), markdown, or special formatting symbols
+- Use plain text only with clear headings
+- Use bullet points with "•" character
+- Use arrows "→" for step transitions
+- Number steps as Step 1:, Step 2:, etc.
 
-**📝 Question:**
+Answer in this exact plain-text format:
+
+📝 Question:
 [Identify and write the question from the image]
 
-**📋 Given:**
-• [List all given information clearly]
+📋 Given:
+• [List all given information]
 
-**🎯 To Find:**
+🎯 To Find:
 • [What needs to be found/proved]
 
-**📐 Formula/Theorem Used:**
-• [State the relevant formulas, theorems, or properties]
+📐 Formula / Theorem Used:
+• [State formulas, theorems, or properties by name - as referenced in Balbharti textbook]
 
-**✍️ Solution:**
+✍️ Solution:
 
-**Step 1:**
-[First step with clear explanation]
+Step 1:
+[Clear explanation with calculation]
 
-**Step 2:**
-[Second step with clear explanation]
+Step 2:
+[Next step with calculation]
 
-[Continue with all necessary steps...]
+[Continue all necessary steps...]
 
-**✅ Answer:**
-[Final answer with proper units - highlight/box it]
+✅ Answer:
+[Final answer with proper units]
 
-**📌 Note:**
-[Any important points or alternative methods]
+📌 Note:
+[Important points, alternative methods, or Balbharti textbook reference]
 
-Important guidelines:
-1. Use standard mathematical notation
-2. Show all working steps clearly
-3. Include diagrams description if needed for geometry problems
-4. Mention theorem/property names when used
-5. For geometry: mention construction steps separately
-6. For algebra: show step-by-step simplification
-7. Format should be exam-ready`
+Guidelines:
+1. Use standard mathematical notation (no markdown)
+2. Show every working step clearly as done in Shala.com solutions
+3. Mention theorem/property names as per Balbharti textbook
+4. For geometry: mention construction steps separately
+5. For algebra: show step-by-step simplification
+6. Reference the approach used in Maharashtra Board exam pattern
+7. Keep it clean, readable, and exam-ready`
         }
       });
 
       if (error) throw error;
 
-      setSolution(data.analysis);
+      // Clean the response: remove leftover markdown stars and artifacts
+      let cleanSolution = data.analysis || '';
+      cleanSolution = cleanSolution.replace(/\*\*/g, '').replace(/\*/g, '').replace(/#{1,6}\s/g, '');
+      setSolution(cleanSolution);
       toast({
         title: 'Success!',
-        description: 'Math problem solved in Shala.com format!'
+        description: 'Solved using Maharashtra Board (Shala + Balbharti) format!'
       });
     } catch (error) {
       console.error('Error solving math problem:', error);
@@ -387,7 +396,7 @@ Important guidelines:
             ) : (
               <>
                 <Calculator className="h-5 w-5" />
-                Solve (Shala.com Format)
+                Solve (Shala + Balbharti + BYJU'S)
               </>
             )}
           </Button>
