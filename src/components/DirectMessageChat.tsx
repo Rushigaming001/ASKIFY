@@ -3,11 +3,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { X, Video, Phone, PhoneIncoming, PhoneMissed, PhoneOff } from 'lucide-react';
+import { X, Video, Phone, PhoneIncoming, PhoneMissed, PhoneOff, Camera, CircleDot } from 'lucide-react';
 import { WebRTCCall } from './WebRTCCall';
 import { useToast } from '@/hooks/use-toast';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { EnhancedChatInput, TypingIndicator, useTypingIndicator, DateSeparator, isDifferentDay } from './chat';
+import { SnapSender } from './SnapSender';
+import { StoriesViewer } from './StoriesViewer';
 
 interface DirectMessage {
   id: string;
@@ -46,6 +48,8 @@ export function DirectMessageChat({ recipientId, recipientName, onClose }: Direc
   const [isLoading, setIsLoading] = useState(false);
   const [showVideoCall, setShowVideoCall] = useState(false);
   const [showVoiceCall, setShowVoiceCall] = useState(false);
+  const [showSnapSender, setShowSnapSender] = useState(false);
+  const [showStatusBar, setShowStatusBar] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Typing indicator
@@ -278,7 +282,13 @@ export function DirectMessageChat({ recipientId, recipientName, onClose }: Direc
     <div className="flex flex-col h-full bg-background border-l border-border">
       <div className="flex items-center justify-between p-4 border-b border-border">
         <h3 className="font-semibold">DM with {recipientName}</h3>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          <Button size="sm" variant="ghost" onClick={() => setShowStatusBar(!showStatusBar)} title="Status">
+            <CircleDot className="h-4 w-4" />
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setShowSnapSender(true)} title="Send Snap" className="text-yellow-600 dark:text-yellow-400">
+            <Camera className="h-4 w-4" />
+          </Button>
           <Button size="sm" variant="ghost" onClick={() => handleStartCall('video')}>
             <Video className="h-4 w-4" />
           </Button>
@@ -290,6 +300,13 @@ export function DirectMessageChat({ recipientId, recipientName, onClose }: Direc
           </Button>
         </div>
       </div>
+
+      {/* Status/Stories Bar */}
+      {showStatusBar && (
+        <div className="border-b border-border">
+          <StoriesViewer />
+        </div>
+      )}
 
       <ScrollArea className="flex-1" ref={scrollRef}>
         <div className="p-4 space-y-2">
@@ -378,6 +395,13 @@ export function DirectMessageChat({ recipientId, recipientName, onClose }: Direc
         recipientName={recipientName}
         recipientId={recipientId}
         isInitiator={true}
+      />
+
+      <SnapSender
+        isOpen={showSnapSender}
+        onClose={() => setShowSnapSender(false)}
+        recipientId={recipientId}
+        recipientName={recipientName}
       />
     </div>
   );

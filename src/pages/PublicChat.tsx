@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, Send, Users, MoreVertical, Edit2, Trash2, UserCircle, Video, Phone, Reply, X, Music, Shield, Lock, Trash, Copy } from 'lucide-react';
+import { ArrowLeft, Send, Users, MoreVertical, Edit2, Trash2, UserCircle, Video, Phone, Reply, X, Music, Shield, Lock, Trash, Copy, Camera, Clapperboard, CircleDot } from 'lucide-react';
 import { ClearAllMessagesButton } from '@/components/ClearAllMessagesButton';
 import { EnhancedChatInput, TypingIndicator, useTypingIndicator, DateSeparator, isDifferentDay, MusicBotPanel } from '@/components/chat';
 import { WebRTCCall } from '@/components/WebRTCCall';
@@ -40,6 +40,8 @@ import {
 import { FriendRequestsPanel } from '@/components/FriendRequestsPanel';
 import { DirectMessageChat } from '@/components/DirectMessageChat';
 import { UserProfileDialog } from '@/components/UserProfileDialog';
+import { StoriesViewer } from '@/components/StoriesViewer';
+import { SnapSender } from '@/components/SnapSender';
 
 interface PublicMessage {
   id: string;
@@ -90,6 +92,9 @@ const PublicChat = () => {
   const [userRestrictionData, setUserRestrictionData] = useState<any>(null);
   const [allProfiles, setAllProfiles] = useState<{ id: string; name: string }[]>([]);
   const [viewingProfile, setViewingProfile] = useState<{ userId: string; userName: string } | null>(null);
+  const [showSnapSender, setShowSnapSender] = useState(false);
+  const [snapRecipient, setSnapRecipient] = useState<{ id: string; name: string; avatar?: string } | null>(null);
+  const [showStoriesSection, setShowStoriesSection] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   
   // Typing indicator
@@ -738,6 +743,64 @@ const PublicChat = () => {
           </div>
         </header>
 
+        {/* Stories / Status / Reel / Snap Section */}
+        <div className="border-b border-border bg-background/50">
+          <div className="flex items-center gap-2 px-3 py-2 border-b border-border/50">
+            <Button
+              variant={showStoriesSection ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowStoriesSection(!showStoriesSection)}
+              className="h-8 gap-1.5 text-xs rounded-full"
+            >
+              <CircleDot className="h-3.5 w-3.5" />
+              Status
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowUsersList(true)}
+              className="h-8 gap-1.5 text-xs rounded-full border-yellow-500/30 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-500/10"
+            >
+              <Camera className="h-3.5 w-3.5" />
+              Snap
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'video/*';
+                input.onchange = async (e) => {
+                  const file = (e.target as HTMLInputElement).files?.[0];
+                  if (!file || !user) return;
+                  if (file.size > 15 * 1024 * 1024) {
+                    toast({ title: 'File too large', description: 'Maximum 15MB for reels', variant: 'destructive' });
+                    return;
+                  }
+                  try {
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+                    const { error: uploadError } = await supabase.storage.from('stories').upload(fileName, file);
+                    if (uploadError) throw uploadError;
+                    const { data: { publicUrl } } = supabase.storage.from('stories').getPublicUrl(fileName);
+                    await supabase.from('stories').insert({ user_id: user.id, media_url: publicUrl, media_type: 'video' });
+                    toast({ title: 'Reel posted! 🎬' });
+                  } catch (err: any) {
+                    toast({ title: 'Failed to post reel', description: err.message, variant: 'destructive' });
+                  }
+                };
+                input.click();
+              }}
+              className="h-8 gap-1.5 text-xs rounded-full border-purple-500/30 text-purple-600 dark:text-purple-400 hover:bg-purple-500/10"
+            >
+              <Clapperboard className="h-3.5 w-3.5" />
+              Reel
+            </Button>
+          </div>
+          {showStoriesSection && <StoriesViewer />}
+        </div>
+
         <ScrollArea className="flex-1 chat-scroll" ref={scrollRef}>
           <div className="p-4 space-y-1">
             {messages.length === 0 ? (
@@ -1060,6 +1123,17 @@ const PublicChat = () => {
             onOpenChange={(open) => !open && setViewingProfile(null)}
             userId={viewingProfile.userId}
             userName={viewingProfile.userName}
+          />
+        )}
+
+        {/* Snap Sender Dialog */}
+        {snapRecipient && (
+          <SnapSender
+            isOpen={!!snapRecipient}
+            onClose={() => setSnapRecipient(null)}
+            recipientId={snapRecipient.id}
+            recipientName={snapRecipient.name}
+            recipientAvatar={snapRecipient.avatar}
           />
         )}
       </div>
