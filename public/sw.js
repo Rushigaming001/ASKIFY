@@ -1,6 +1,6 @@
 // Service Worker for Push Notifications + Offline Support
 
-const CACHE_NAME = 'askify-offline-v3';
+const CACHE_NAME = 'askify-offline-v4';
 const OFFLINE_URL = '/offline.html';
 
 self.addEventListener('install', (event) => {

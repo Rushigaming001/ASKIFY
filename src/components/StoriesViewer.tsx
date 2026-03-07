@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
-import { X, ChevronLeft, ChevronRight, Plus, Camera, Loader2, Eye } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Plus, Camera, Loader2, Eye, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Story {
@@ -403,11 +403,24 @@ export function StoriesViewer() {
             </div>
           )}
 
-          {/* View count (own stories) */}
+          {/* View count & delete (own stories) */}
           {activeUser.user_id === user?.id && (
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 text-white/80">
-              <Eye className="h-4 w-4" />
-              <span className="text-sm">{activeStory.view_count} views</span>
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 text-white/80">
+              <div className="flex items-center gap-2">
+                <Eye className="h-4 w-4" />
+                <span className="text-sm">{activeStory.view_count} views</span>
+              </div>
+              <button
+                onClick={async () => {
+                  await supabase.from('stories').delete().eq('id', activeStory.id);
+                  toast({ title: 'Story deleted' });
+                  closeStory();
+                }}
+                className="flex items-center gap-1 text-red-400 hover:text-red-300"
+              >
+                <Trash2 className="h-4 w-4" />
+                <span className="text-sm">Delete</span>
+              </button>
             </div>
           )}
 
