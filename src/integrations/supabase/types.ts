@@ -1261,6 +1261,51 @@ export type Database = {
           },
         ]
       }
+      subscription_plans: {
+        Row: {
+          coin_price: number
+          created_at: string
+          description: string | null
+          display_name: string
+          features: Json
+          id: string
+          is_active: boolean
+          is_popular: boolean
+          role_name: string
+          sort_order: number
+          tier: string
+          updated_at: string
+        }
+        Insert: {
+          coin_price?: number
+          created_at?: string
+          description?: string | null
+          display_name: string
+          features?: Json
+          id?: string
+          is_active?: boolean
+          is_popular?: boolean
+          role_name: string
+          sort_order?: number
+          tier?: string
+          updated_at?: string
+        }
+        Update: {
+          coin_price?: number
+          created_at?: string
+          description?: string | null
+          display_name?: string
+          features?: Json
+          id?: string
+          is_active?: boolean
+          is_popular?: boolean
+          role_name?: string
+          sort_order?: number
+          tier?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       usage_logs: {
         Row: {
           created_at: string
@@ -1523,6 +1568,10 @@ export type Database = {
       is_owner: { Args: { _user_id: string }; Returns: boolean }
       is_owner_or_admin: { Args: { _user_id: string }; Returns: boolean }
       is_user_timed_out: { Args: { _user_id: string }; Returns: boolean }
+      purchase_subscription: {
+        Args: { _plan_id: string; _user_id: string }
+        Returns: boolean
+      }
       record_rate_limit: {
         Args: { _action_type: string; _user_id: string }
         Returns: undefined
