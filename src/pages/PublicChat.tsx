@@ -812,6 +812,15 @@ const PublicChat = () => {
               <Clapperboard className="h-3.5 w-3.5" />
               Reel
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/reels')}
+              className="h-8 gap-1.5 text-xs rounded-full border-pink-500/30 text-pink-600 dark:text-pink-400 hover:bg-pink-500/10"
+            >
+              <Clapperboard className="h-3.5 w-3.5" />
+              View Reels
+            </Button>
           </div>
           {showStoriesSection && <StoriesViewer />}
         </div>
