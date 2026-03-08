@@ -162,7 +162,7 @@ export function useAdminGuard() {
 
     const verify = async () => {
       try {
-        const { data: allowed } = await supabase.rpc('is_admin', {
+        const { data: allowed } = await supabase.rpc('is_owner', {
           _user_id: session.user.id,
         });
         
