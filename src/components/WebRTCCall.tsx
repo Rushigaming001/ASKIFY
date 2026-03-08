@@ -961,40 +961,75 @@ export function WebRTCCall({
             </div>
           )}
 
+          {/* In-Call Chat Panel */}
+          {showCallChat && (
+            <div className="absolute top-4 right-4 w-80 bg-background/95 backdrop-blur-sm rounded-lg shadow-xl z-10 flex flex-col max-h-[60%]">
+              <div className="flex items-center justify-between p-3 border-b border-border">
+                <span className="text-sm font-medium">Chat</span>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowCallChat(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <ScrollArea className="flex-1 p-3">
+                <div className="space-y-2">
+                  {callChatMessages.map(msg => (
+                    <div key={msg.id} className="text-xs">
+                      <span className="font-medium text-primary">{msg.name}</span>
+                      <span className="text-muted-foreground ml-2">{msg.time}</span>
+                      <p className="text-foreground mt-0.5">{msg.text}</p>
+                    </div>
+                  ))}
+                  <div ref={callChatEndRef} />
+                </div>
+              </ScrollArea>
+              <div className="flex items-center gap-2 p-2 border-t border-border">
+                <Input
+                  value={callChatInput}
+                  onChange={(e) => setCallChatInput(e.target.value)}
+                  placeholder="Type a message..."
+                  className="text-xs h-8"
+                  onKeyDown={(e) => e.key === 'Enter' && sendCallChatMessage()}
+                />
+                <Button size="icon" className="h-8 w-8 flex-shrink-0" onClick={sendCallChatMessage}>
+                  <Send className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Call Controls */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-background/90 backdrop-blur-sm px-4 py-3 rounded-full shadow-xl flex-wrap justify-center">
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-background/90 backdrop-blur-sm px-4 py-3 rounded-full shadow-xl flex-wrap justify-center">
             {callType === 'video' && (
               <>
                 <Button
                   size="lg"
                   variant={isVideoOn ? "default" : "destructive"}
-                  className="rounded-full h-12 w-12"
+                  className="rounded-full h-11 w-11"
                   onClick={toggleVideo}
                   title={isVideoOn ? "Turn off camera" : "Turn on camera"}
                 >
-                  {isVideoOn ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
+                  {isVideoOn ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
                 </Button>
                 
                 <Button
                   size="lg"
                   variant="secondary"
-                  className="rounded-full h-12 w-12"
+                  className="rounded-full h-11 w-11"
                   onClick={switchCamera}
                   title="Switch camera"
                 >
-                  <SwitchCamera className="h-5 w-5" />
+                  <SwitchCamera className="h-4 w-4" />
                 </Button>
                 
-                {/* Hide screen share on mobile */}
                 {!isMobile && (
                   <Button
                     size="lg"
                     variant={isScreenSharing ? "default" : "secondary"}
-                    className="rounded-full h-12 w-12"
+                    className="rounded-full h-11 w-11"
                     onClick={toggleScreenShare}
                     title={isScreenSharing ? "Stop sharing" : "Share screen"}
                   >
-                    <Monitor className="h-5 w-5" />
+                    <Monitor className="h-4 w-4" />
                   </Button>
                 )}
               </>
@@ -1003,31 +1038,55 @@ export function WebRTCCall({
             <Button
               size="lg"
               variant={isMicOn ? "default" : "destructive"}
-              className="rounded-full h-12 w-12"
+              className="rounded-full h-11 w-11"
               onClick={toggleMic}
               title={isMicOn ? "Mute" : "Unmute"}
             >
-              {isMicOn ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
+              {isMicOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
+            </Button>
+
+            {/* In-Call Chat Button */}
+            <Button
+              size="lg"
+              variant={showCallChat ? "default" : "secondary"}
+              className="rounded-full h-11 w-11"
+              onClick={() => { setShowCallChat(!showCallChat); setShowMusicPlayer(false); }}
+              title="Chat"
+            >
+              <MessageSquare className="h-4 w-4" />
             </Button>
 
             <Button
               size="lg"
               variant={showMusicPlayer ? "default" : "secondary"}
-              className="rounded-full h-12 w-12"
-              onClick={() => setShowMusicPlayer(!showMusicPlayer)}
+              className="rounded-full h-11 w-11"
+              onClick={() => { setShowMusicPlayer(!showMusicPlayer); setShowCallChat(false); }}
               title={showMusicPlayer ? "Hide music" : "Show music"}
             >
-              <Music className="h-5 w-5" />
+              <Music className="h-4 w-4" />
             </Button>
+
+            {/* Owner-Only Recording Button */}
+            {isOwner && (
+              <Button
+                size="lg"
+                variant={isRecording ? "destructive" : "secondary"}
+                className={`rounded-full h-11 w-11 ${isRecording ? 'animate-pulse' : ''}`}
+                onClick={isRecording ? stopRecording : startRecording}
+                title={isRecording ? "Stop recording" : "Record call"}
+              >
+                <Circle className={`h-4 w-4 ${isRecording ? 'fill-current' : ''}`} />
+              </Button>
+            )}
 
             <Button
               size="lg"
               variant="destructive"
-              className="rounded-full h-14 w-14"
+              className="rounded-full h-12 w-12"
               onClick={handleEndCall}
               title="End call"
             >
-              <PhoneOff className="h-6 w-6" />
+              <PhoneOff className="h-5 w-5" />
             </Button>
           </div>
         </div>
