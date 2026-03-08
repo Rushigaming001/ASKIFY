@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Check, ArrowLeft, Crown, Rocket, Diamond, Award, Star, Gem, Shield, Sparkles, Zap, X, Send, MessageSquare, Mail } from 'lucide-react';
+import { Check, ArrowLeft, Crown, Rocket, Diamond, Award, Star, Gem, Shield, Sparkles, Zap, X, Send, MessageSquare, Mail, Gift, Loader2, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +10,7 @@ import { CoinBalance } from '@/components/CoinSystem';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import pricingLogo from '@/assets/pricing-logo.png';
 
@@ -61,11 +62,21 @@ export default function Pricing() {
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackEmail, setFeedbackEmail] = useState('');
   const [sendingFeedback, setSendingFeedback] = useState(false);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
+  // Gift dialog
+  const [showGift, setShowGift] = useState(false);
+  const [giftPlanId, setGiftPlanId] = useState('');
+  const [giftPlanName, setGiftPlanName] = useState('');
+  const [giftSearch, setGiftSearch] = useState('');
+  const [giftUsers, setGiftUsers] = useState<{ id: string; name: string; avatar_url?: string }[]>([]);
+  const [giftTarget, setGiftTarget] = useState('');
+  const [gifting, setGifting] = useState(false);
 
   useEffect(() => {
     loadPlans();
     loadHeroText();
-  }, []);
+    if (user) loadUserRoles();
+  }, [user]);
 
   const loadPlans = async () => {
     try {
@@ -98,8 +109,26 @@ export default function Pricing() {
     }
   };
 
+  const loadUserRoles = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id);
+    setUserRoles((data || []).map(r => r.role));
+  };
+
+  const hasRole = (roleName: string) => userRoles.includes(roleName);
+
   const handlePurchase = async (planId: string) => {
     if (!user) { navigate('/auth'); return; }
+    
+    const plan = plans.find(p => p.id === planId);
+    if (plan && hasRole(plan.role_name)) {
+      toast.error('You already own this plan!');
+      return;
+    }
+    
     setPurchasing(planId);
     try {
       const { data, error } = await supabase.rpc('purchase_subscription', {
@@ -108,8 +137,9 @@ export default function Pricing() {
       });
       if (error) throw error;
       if (data) {
-        toast.success('Subscription purchased! Role granted.');
+        toast.success('🎉 Subscription purchased! Role granted.');
         loadPlans();
+        loadUserRoles();
       } else {
         toast.error('Not enough Askify Coins or plan unavailable.');
       }
@@ -120,11 +150,56 @@ export default function Pricing() {
     }
   };
 
+  const openGiftDialog = async (planId: string, planName: string) => {
+    setGiftPlanId(planId);
+    setGiftPlanName(planName);
+    setGiftTarget('');
+    setGiftSearch('');
+    setShowGift(true);
+    // Load users
+    const { data } = await supabase.from('profiles').select('id, name, avatar_url');
+    if (data) setGiftUsers(data.filter(u => u.id !== user?.id));
+  };
+
+  const handleGift = async () => {
+    if (!user || !giftTarget || !giftPlanId) return;
+    setGifting(true);
+    try {
+      const { data, error } = await supabase.rpc('purchase_subscription', {
+        _user_id: user.id,
+        _plan_id: giftPlanId,
+      });
+      if (error) throw error;
+      if (!data) { toast.error('Not enough coins'); setGifting(false); return; }
+      
+      // The purchase_subscription gives role to _user_id, but we want to gift to giftTarget
+      // So we need to: remove the role from buyer, add to target
+      const plan = plans.find(p => p.id === giftPlanId);
+      if (plan) {
+        // Remove from buyer (was just added)
+        await supabase.from('user_roles').delete().eq('user_id', user.id).eq('role', plan.role_name as any);
+        // Add to target
+        await supabase.from('user_roles').insert({ user_id: giftTarget, role: plan.role_name as any });
+        // Send DM notification
+        await supabase.from('direct_messages').insert({
+          sender_id: user.id,
+          receiver_id: giftTarget,
+          content: `🎁 You've been gifted the **${plan.display_name}** plan! Enjoy your new role.`,
+        });
+      }
+      toast.success(`🎁 Gift sent! ${giftPlanName} gifted successfully.`);
+      setShowGift(false);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setGifting(false);
+    }
+  };
+
   const handleSendFeedback = async () => {
     if (!feedbackText.trim()) { toast.error('Please enter your feedback'); return; }
     setSendingFeedback(true);
     try {
-      // Send as DM to owner
       if (user) {
         const { data: ownerRole } = await supabase
           .from('user_roles')
@@ -142,7 +217,6 @@ export default function Pricing() {
         }
       }
 
-      // Also send via edge function to email
       await supabase.functions.invoke('send-feedback', {
         body: {
           email: feedbackEmail || (user ? 'Logged-in user' : 'Anonymous'),
@@ -167,6 +241,8 @@ export default function Pricing() {
     acc[plan.tier].push(plan);
     return acc;
   }, {} as Record<string, Plan[]>);
+
+  const filteredGiftUsers = giftUsers.filter(u => u.name.toLowerCase().includes(giftSearch.toLowerCase()));
 
   return (
     <div className="min-h-screen bg-background">
@@ -226,51 +302,80 @@ export default function Pricing() {
                 <div className={`h-px flex-1 bg-gradient-to-r ${tier === 'Tier 1' ? 'from-indigo-500/40' : tier === 'Tier 2' ? 'from-amber-500/40' : 'from-emerald-500/40'} to-transparent`} />
               </div>
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {tierPlans.map((plan) => (
-                  <Card
-                    key={plan.id}
-                    className={`relative group transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 bg-gradient-to-br ${tierGradients[plan.tier] || ''} ${plan.is_popular ? `ring-2 ring-primary/40 shadow-xl shadow-primary/10 ${tierBorderColors[plan.tier] || ''}` : 'hover:shadow-primary/5'}`}
-                  >
-                    {plan.is_popular && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                        <Badge className="bg-primary text-primary-foreground shadow-lg shadow-primary/30 px-4 py-1">
-                          ⚡ Most Popular
-                        </Badge>
-                      </div>
-                    )}
-                    <CardHeader className="text-center pb-2 pt-6">
-                      <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary group-hover:scale-110 transition-transform duration-300">
-                        {iconMap[plan.role_name] || <Star className="h-6 w-6" />}
-                      </div>
-                      <CardTitle className="text-xl font-bold">{plan.display_name}</CardTitle>
-                      <CardDescription className="text-sm">{plan.description}</CardDescription>
-                      <div className="mt-4 flex items-baseline justify-center gap-1">
-                        <span className="text-4xl font-extrabold">{plan.coin_price}</span>
-                        <span className="text-sm text-muted-foreground font-medium">AC</span>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4 pb-6">
-                      <ul className="space-y-2.5">
-                        {plan.features.map((feature, idx) => (
-                          <li key={idx} className="flex items-start gap-2.5 text-sm">
-                            <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <Check className="h-3 w-3 text-primary" />
-                            </div>
-                            <span>{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      <Button
-                        className={`w-full h-11 font-semibold ${plan.is_popular ? 'btn-glow' : ''}`}
-                        variant={plan.is_popular ? 'default' : 'outline'}
-                        onClick={() => handlePurchase(plan.id)}
-                        disabled={purchasing === plan.id}
-                      >
-                        {purchasing === plan.id ? 'Processing...' : `Buy for ${plan.coin_price} AC`}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
+                {tierPlans.map((plan) => {
+                  const owned = hasRole(plan.role_name);
+                  return (
+                    <Card
+                      key={plan.id}
+                      className={`relative group transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 bg-gradient-to-br ${tierGradients[plan.tier] || ''} ${plan.is_popular ? `ring-2 ring-primary/40 shadow-xl shadow-primary/10 ${tierBorderColors[plan.tier] || ''}` : 'hover:shadow-primary/5'} ${owned ? 'ring-2 ring-green-500/40' : ''}`}
+                    >
+                      {owned && (
+                        <div className="absolute -top-3 right-4 z-10">
+                          <Badge className="bg-green-500 text-white shadow-lg px-3 py-1 gap-1">
+                            <CheckCircle className="h-3 w-3" /> Current Plan
+                          </Badge>
+                        </div>
+                      )}
+                      {plan.is_popular && !owned && (
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                          <Badge className="bg-primary text-primary-foreground shadow-lg shadow-primary/30 px-4 py-1">
+                            ⚡ Most Popular
+                          </Badge>
+                        </div>
+                      )}
+                      <CardHeader className="text-center pb-2 pt-6">
+                        <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary group-hover:scale-110 transition-transform duration-300">
+                          {iconMap[plan.role_name] || <Star className="h-6 w-6" />}
+                        </div>
+                        <CardTitle className="text-xl font-bold">{plan.display_name}</CardTitle>
+                        <CardDescription className="text-sm">{plan.description}</CardDescription>
+                        <div className="mt-4 flex items-baseline justify-center gap-1">
+                          <span className="text-4xl font-extrabold">{plan.coin_price}</span>
+                          <span className="text-sm text-muted-foreground font-medium">AC</span>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4 pb-6">
+                        <ul className="space-y-2.5">
+                          {plan.features.map((feature, idx) => (
+                            <li key={idx} className="flex items-start gap-2.5 text-sm">
+                              <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <Check className="h-3 w-3 text-primary" />
+                              </div>
+                              <span>{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+                        <div className="flex gap-2">
+                          <Button
+                            className={`flex-1 h-11 font-semibold ${plan.is_popular && !owned ? 'btn-glow' : ''}`}
+                            variant={owned ? 'secondary' : plan.is_popular ? 'default' : 'outline'}
+                            onClick={() => handlePurchase(plan.id)}
+                            disabled={purchasing === plan.id || owned}
+                          >
+                            {owned ? (
+                              <><CheckCircle className="h-4 w-4 mr-1" /> Owned</>
+                            ) : purchasing === plan.id ? (
+                              <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Processing...</>
+                            ) : (
+                              `Buy for ${plan.coin_price} AC`
+                            )}
+                          </Button>
+                          {!owned && user && (
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-11 w-11"
+                              title="Gift this plan"
+                              onClick={() => openGiftDialog(plan.id, plan.display_name)}
+                            >
+                              <Gift className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </div>
           ))
@@ -295,7 +400,7 @@ export default function Pricing() {
             <MessageSquare className="h-10 w-10 mx-auto mb-4 text-primary" />
             <h3 className="text-xl font-bold mb-2">Share Feedback</h3>
             <p className="text-muted-foreground mb-4 text-sm">
-              Tell us what changes you'd like to see. We value your input!
+              Tell us what changes you'd like to see.
             </p>
             <Button variant="outline">
               <Send className="h-4 w-4 mr-2" />
@@ -315,22 +420,18 @@ export default function Pricing() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div>
-              <Input
-                placeholder="Your email (optional)"
-                value={feedbackEmail}
-                onChange={e => setFeedbackEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <Textarea
-                placeholder="What changes would you like to see? Tell us your suggestions, complaints, or ideas..."
-                value={feedbackText}
-                onChange={e => setFeedbackText(e.target.value)}
-                rows={5}
-                className="resize-none"
-              />
-            </div>
+            <Input
+              placeholder="Your email (optional)"
+              value={feedbackEmail}
+              onChange={e => setFeedbackEmail(e.target.value)}
+            />
+            <Textarea
+              placeholder="What changes would you like to see?"
+              value={feedbackText}
+              onChange={e => setFeedbackText(e.target.value)}
+              rows={5}
+              className="resize-none"
+            />
             <Button className="w-full" onClick={handleSendFeedback} disabled={sendingFeedback}>
               {sendingFeedback ? 'Sending...' : 'Send Feedback'}
               <Send className="h-4 w-4 ml-2" />
@@ -338,6 +439,44 @@ export default function Pricing() {
             <p className="text-xs text-muted-foreground text-center">
               Your feedback will be sent to the Askify team via email and in-app message.
             </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Gift Dialog */}
+      <Dialog open={showGift} onOpenChange={setShowGift}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Gift className="h-5 w-5 text-primary" />
+              Gift {giftPlanName}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <Input
+              placeholder="Search users..."
+              value={giftSearch}
+              onChange={e => setGiftSearch(e.target.value)}
+            />
+            <div className="max-h-40 overflow-y-auto space-y-1">
+              {filteredGiftUsers.map(u => (
+                <button
+                  key={u.id}
+                  onClick={() => setGiftTarget(u.id)}
+                  className={`w-full flex items-center gap-2 p-2 rounded-lg text-left text-sm transition-colors ${giftTarget === u.id ? 'bg-primary/10 border border-primary/30' : 'hover:bg-muted'}`}
+                >
+                  <Avatar className="h-6 w-6">
+                    {u.avatar_url && <AvatarImage src={u.avatar_url} />}
+                    <AvatarFallback className="text-[10px]">{u.name[0]}</AvatarFallback>
+                  </Avatar>
+                  <span>{u.name}</span>
+                </button>
+              ))}
+            </div>
+            <Button className="w-full" onClick={handleGift} disabled={!giftTarget || gifting}>
+              {gifting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Gift className="h-4 w-4 mr-2" />}
+              Gift Plan
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

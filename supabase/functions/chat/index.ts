@@ -292,7 +292,13 @@ Format: Use numbered steps. Be precise. Avoid logical fallacies. Show your work 
       externalApiUrl = 'https://api.cohere.ai/v2/chat';
       externalApiKey = COHERE_API_KEY || '';
       aiModel = 'command-r-08-2024';
-    } else if (model === 'deepseek' || model === 'deepseek-v3') {
+    } else if (model === 'deepseek' || model === 'lite') {
+      // Lite model now handled by Groq
+      useExternalApi = true;
+      externalApiUrl = 'https://api.groq.com/openai/v1/chat/completions';
+      externalApiKey = GROQ_API_KEY || '';
+      aiModel = 'llama-3.1-8b-instant';
+    } else if (model === 'deepseek-v3') {
       useExternalApi = true;
       externalApiUrl = 'https://api.deepseek.com/chat/completions';
       externalApiKey = DEEPSEEK_API_KEY || '';

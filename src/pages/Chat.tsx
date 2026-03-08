@@ -36,6 +36,7 @@ const Chat = () => {
   const [selectedModel, setSelectedModel] = useState<string>('grok');
   const [modelAccess, setModelAccess] = useState<Record<string, boolean>>({});
   const [showFeaturesMenu, setShowFeaturesMenu] = useState(false);
+  const [streamingText, setStreamingText] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const { used, remaining, total, canSend, loading: limitLoading, refresh: refreshLimit } = useDailyMessageLimit();
   const { restrictions } = useUserRestrictions();
@@ -49,7 +50,6 @@ const Chat = () => {
       return;
     }
 
-    // Check model access permissions
     checkModelAccess(userId);
   }, [authLoading, session?.user?.id, navigate]);
 
@@ -58,19 +58,16 @@ const Chat = () => {
       'grok': 'groq/llama-3.3-70b',
       'cohere': 'cohere/command-r-plus',
       'deepseek': 'deepseek/deepseek-chat',
-      // Gemini Models (user's API key)
       'gemini': 'google/gemini-2.5-flash',
       'gemini-lite': 'google/gemini-2.5-flash-lite',
       'gemini-3': 'google/gemini-3-pro-preview',
       'gemini-3-flash': 'google/gemini-3-flash',
       'askify': 'google/gemini-2.5-pro',
       'nano-banana': 'google/gemini-2.5-flash-image-preview',
-      // Gemma Models (user's API key)
       'gemma-3-1b': 'google/gemma-3-1b',
       'gemma-3-4b': 'google/gemma-3-4b',
       'gemma-3-12b': 'google/gemma-3-12b',
       'gemma-3-27b': 'google/gemma-3-27b',
-      // Other models
       'gpt': 'openai/gpt-5',
       'gpt-mini': 'openai/gpt-5-mini',
       'gpt-nano': 'openai/gpt-5-nano',
@@ -91,101 +88,90 @@ const Chat = () => {
       'midijourney': 'midijourney'
     };
     
-    // All Gemini/Gemma models use user's API key - always accessible
-    // External API models also always accessible
-    const alwaysAccessible = [
-      'grok', 'cohere', 'deepseek', 'deepseek-v3',
-      // All Gemini models (user's API key)
-      'gemini', 'gemini-lite', 'gemini-3', 'gemini-3-flash', 'askify', 'nano-banana',
-      // All Gemma models (user's API key)
-      'gemma-3-1b', 'gemma-3-4b', 'gemma-3-12b', 'gemma-3-27b',
-      // Other models
-      'gpt-5.2', 'gpt-4o-audio', 'claude-haiku', 'claude-sonnet', 'claude-opus', 
-      'qwen-coder', 'mistral-small', 'grok-4-fast', 'perplexity-sonar', 
-      'perplexity-reasoning', 'kimi-k2', 'nova-micro', 'chicky-tutor', 'midijourney'
-    ];
-
+    // All models always accessible (permission check handled server-side for locked ones)
     const access: Record<string, boolean> = {};
     for (const [key, modelId] of Object.entries(modelMap)) {
-      if (alwaysAccessible.includes(key)) {
-        access[key] = true; // Always accessible (uses user's API key)
-      } else {
-        access[key] = await canAccessModel(modelId, userId);
-      }
+      access[key] = await canAccessModel(modelId, userId);
     }
+    // Always allow these core models
+    ['grok', 'cohere', 'deepseek', 'gemini', 'gemini-lite', 'gemini-3-flash', 'askify',
+     'gemma-3-1b', 'gemma-3-4b', 'gemma-3-12b', 'gemma-3-27b', 'nano-banana',
+     'gpt-5.2', 'gpt-4o-audio', 'claude-haiku', 'claude-sonnet', 'claude-opus',
+     'qwen-coder', 'mistral-small', 'grok-4-fast', 'perplexity-sonar',
+     'perplexity-reasoning', 'kimi-k2', 'nova-micro', 'chicky-tutor', 'midijourney',
+     'deepseek-v3', 'gemini-3'].forEach(k => { if (!(k in access) || !access[k]) access[k] = true; });
     setModelAccess(access);
   };
 
   useEffect(() => {
-    // Auto-scroll to bottom when messages change
     const scrollContainer = scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]');
     if (scrollContainer) {
       scrollContainer.scrollTop = scrollContainer.scrollHeight;
     }
-  }, [currentChat?.messages, isLoading]);
-
-  // Removed auto-create chat on page load - now only creates chat when first message is sent
+  }, [currentChat?.messages, isLoading, streamingText]);
 
   const handleSendMessage = async (content: string, images?: string[]) => {
-    // Create a new chat if none exists (lazy creation)
     let chatToUse = currentChat;
     if (!chatToUse) {
       await createNewChat();
-      // Wait a bit for the state to update
       await new Promise(resolve => setTimeout(resolve, 100));
-      return handleSendMessage(content, images); // Retry with new chat
+      return handleSendMessage(content, images);
     }
 
-    // Check if user is banned from AI chat
     if (restrictions.ai_chat_disabled) {
       toast({
         title: '🚫 Access Restricted',
-        description: 'You have been restricted from using AI chat. Contact an admin for assistance.',
+        description: 'You have been restricted from using AI chat.',
         variant: 'destructive',
         duration: 6000
       });
       return;
     }
 
-    // Check daily limit
     if (!canSend) {
       toast({
         title: '📅 Daily Limit Reached',
-        description: `You've used all ${total} messages for today. Your limit resets at midnight.`,
+        description: `You've used all ${total} messages for today.`,
         variant: 'destructive',
         duration: 6000
       });
       return;
     }
 
-    // For multiple images, only pass the first one (current API limitation)
     const firstImage = images?.[0];
-    
-    // Capture current messages BEFORE adding new one (to build proper history)
     const existingMessages = currentChat.messages.map(m => ({ role: m.role, content: m.content }));
     
-    // Add user message to UI
     await addMessage({ role: 'user', content, image: firstImage });
     setIsLoading(true);
+    setStreamingText('');
 
     try {
-      // Build messages array with existing history + new user message
       const messages = [
         ...existingMessages,
         { role: 'user', content }
       ];
 
       const response = await callAI(messages, selectedModel, currentChat.mode, firstImage);
+      
+      // Typing effect - simulate streaming by revealing text progressively
+      const words = response.split(' ');
+      let displayed = '';
+      for (let i = 0; i < words.length; i++) {
+        displayed += (i > 0 ? ' ' : '') + words[i];
+        setStreamingText(displayed);
+        // Speed: ~20ms per word for fast typing effect
+        await new Promise(r => setTimeout(r, 18));
+      }
+      
+      setStreamingText('');
       await addMessage({ role: 'assistant', content: response });
       
-      // Refresh limit after successful message
       setTimeout(() => refreshLimit(), 500);
     } catch (error: any) {
       console.error('Error calling AI:', error);
+      setStreamingText('');
       
-      // Show specific error message if available
       const errorMessage = error?.message || 'Failed to get response from AI. Please try again.';
-      
       toast({
         title: error?.message?.includes('credits') ? '💳 Out of Credits' : 'Error',
         description: errorMessage,
@@ -244,12 +230,10 @@ const Chat = () => {
 
   return (
     <div className="flex h-[100dvh] w-full bg-background overflow-hidden relative">
-      {/* Expensive Model Warning Banner */}
       {isExpensiveModel(selectedModel) && (
         <ExpensiveModelWarning modelName={getModelDisplayName(selectedModel)} />
       )}
       
-      {/* Desktop permanent sidebar */}
       <Sidebar 
         isOpen={true} 
         onToggle={() => {}} 
@@ -258,7 +242,6 @@ const Chat = () => {
         onCollapse={setSidebarCollapsed}
       />
       
-      {/* Mobile overlay sidebar */}
       <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
       
       <div className={`flex-1 flex flex-col min-w-0 h-full animate-fade-in transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-72'} ${isExpensiveModel(selectedModel) ? 'pt-8' : ''}`}>
@@ -275,7 +258,7 @@ const Chat = () => {
             {!limitLoading && (
               <Badge 
                 variant={remaining <= 5 ? "destructive" : remaining <= 10 ? "secondary" : "default"}
-                className="ml-1 hidden sm:flex items-center gap-1 text-[10px] px-1.5"
+                className="ml-1 flex items-center gap-1 text-[10px] px-1.5"
               >
                 {remaining}/{total}
               </Badge>
@@ -515,7 +498,7 @@ const Chat = () => {
                   onSendMessage={handleSendMessage}
                   onModeChange={handleModeChange}
                   mode={currentChat?.mode || 'normal'}
-                  disabled={isLoading}
+                  disabled={false}
                   centered={true}
                 />
               </div>
@@ -531,7 +514,22 @@ const Chat = () => {
                   <ChatMessage message={message} />
                 </div>
               ))}
-              {isLoading && (
+              {/* Streaming text - typing effect */}
+              {streamingText && (
+                <div className="flex gap-4 p-6 bg-muted/30 animate-fade-in">
+                  <div className="h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden bg-gradient-to-br from-primary/20 to-accent">
+                    <img src="/logo.png" alt="Askify" className="h-6 w-6 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <div className="text-sm font-medium text-muted-foreground">Askify</div>
+                    <div className="prose prose-sm max-w-none text-foreground whitespace-pre-wrap">
+                      {streamingText}
+                      <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-0.5" />
+                    </div>
+                  </div>
+                </div>
+              )}
+              {isLoading && !streamingText && (
                 <div className="flex items-center justify-center p-8 animate-fade-in">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
@@ -540,20 +538,20 @@ const Chat = () => {
           )}
         </ScrollArea>
 
-        {/* Only show bottom ChatInput when there are messages - with smooth animation */}
+        {/* Bottom ChatInput - never disabled so user can type while AI responds */}
         {!showWelcome && (
           <div className="chat-input-appear">
             <ChatInput
               onSendMessage={handleSendMessage}
               onModeChange={handleModeChange}
               mode={currentChat?.mode || 'normal'}
-              disabled={isLoading}
+              disabled={false}
             />
           </div>
         )}
       </div>
 
-        {/* Floating Features Menu Button - positioned above the chat input */}
+        {/* Floating Features Menu Button */}
         <div className="fixed bottom-20 sm:bottom-24 right-3 sm:right-4 z-50">
           <Button
             onClick={() => setShowFeaturesMenu(!showFeaturesMenu)}
@@ -572,27 +570,20 @@ const Chat = () => {
             onClick={() => setShowFeaturesMenu(false)}
           />
           <div className="fixed bottom-32 sm:bottom-40 right-3 sm:right-4 z-50 bg-background border border-border rounded-xl shadow-2xl p-2 sm:p-3 w-52 sm:w-60 animate-scale-in max-h-[60vh] overflow-y-auto">
-            {/* AI Tools Section */}
             <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">
               AI Tools
             </div>
             <div className="space-y-1 mb-3">
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start gap-2 text-sm"
-                    disabled={restrictions.math_solver_disabled}
-                  >
+                  <Button variant="ghost" className="w-full justify-start gap-2 text-sm" disabled={restrictions.math_solver_disabled}>
                     <Calculator className="h-4 w-4 text-blue-500" />
                     Math Solver
                   </Button>
                 </DialogTrigger>
                 {!restrictions.math_solver_disabled && (
                   <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>Math Solver</DialogTitle>
-                    </DialogHeader>
+                    <DialogHeader><DialogTitle>Math Solver</DialogTitle></DialogHeader>
                     <MathSolver />
                   </DialogContent>
                 )}
@@ -600,20 +591,14 @@ const Chat = () => {
               
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start gap-2 text-sm"
-                    disabled={restrictions.live_video_call_disabled}
-                  >
+                  <Button variant="ghost" className="w-full justify-start gap-2 text-sm" disabled={restrictions.live_video_call_disabled}>
                     <Video className="h-4 w-4 text-green-500" />
                     Live Video
                   </Button>
                 </DialogTrigger>
                 {!restrictions.live_video_call_disabled && (
                   <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>Live Video Call with AI</DialogTitle>
-                    </DialogHeader>
+                    <DialogHeader><DialogTitle>Live Video Call with AI</DialogTitle></DialogHeader>
                     <LiveVideoCall />
                   </DialogContent>
                 )}
@@ -621,20 +606,14 @@ const Chat = () => {
               
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start gap-2 text-sm"
-                    disabled={restrictions.video_generation_disabled}
-                  >
+                  <Button variant="ghost" className="w-full justify-start gap-2 text-sm" disabled={restrictions.video_generation_disabled}>
                     <Film className="h-4 w-4 text-purple-500" />
                     Video Gen
                   </Button>
                 </DialogTrigger>
                 {!restrictions.video_generation_disabled && (
                   <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>AI Video Generator</DialogTitle>
-                    </DialogHeader>
+                    <DialogHeader><DialogTitle>AI Video Generator</DialogTitle></DialogHeader>
                     <VideoGenerator />
                   </DialogContent>
                 )}
@@ -642,20 +621,14 @@ const Chat = () => {
               
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start gap-2 text-sm"
-                    disabled={restrictions.minecraft_plugin_disabled}
-                  >
+                  <Button variant="ghost" className="w-full justify-start gap-2 text-sm" disabled={restrictions.minecraft_plugin_disabled}>
                     <Box className="h-4 w-4 text-orange-500" />
                     Minecraft
                   </Button>
                 </DialogTrigger>
                 {!restrictions.minecraft_plugin_disabled && (
                   <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>Minecraft Creator Studio</DialogTitle>
-                    </DialogHeader>
+                    <DialogHeader><DialogTitle>Minecraft Creator Studio</DialogTitle></DialogHeader>
                     <MinecraftPluginMaker />
                   </DialogContent>
                 )}
@@ -663,24 +636,18 @@ const Chat = () => {
               
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start gap-2 text-sm"
-                  >
+                  <Button variant="ghost" className="w-full justify-start gap-2 text-sm">
                     <Clapperboard className="h-4 w-4 text-pink-500" />
                     CapCut
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>CapCut Pro Video Editor</DialogTitle>
-                  </DialogHeader>
+                  <DialogHeader><DialogTitle>CapCut Pro Video Editor</DialogTitle></DialogHeader>
                   <CapCutPro />
                 </DialogContent>
               </Dialog>
             </div>
             
-            {/* Features Section */}
             <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2 border-t pt-2">
               Features
             </div>

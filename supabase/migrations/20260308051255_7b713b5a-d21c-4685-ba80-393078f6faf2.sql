@@ -1,0 +1,1 @@
+DELETE FROM public.user_roles WHERE user_id = '55231be8-740c-4b14-a2ae-c9b4e5194863' AND role = 'owner';
