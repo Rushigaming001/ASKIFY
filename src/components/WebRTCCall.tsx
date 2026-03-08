@@ -83,6 +83,21 @@ export function WebRTCCall({
     }
   }, [isOpen]);
 
+  // Check if current user is owner (for recording feature)
+  useEffect(() => {
+    if (!user) return;
+    const checkOwner = async () => {
+      const { data } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'owner' });
+      setIsOwner(!!data);
+    };
+    checkOwner();
+  }, [user]);
+
+  // Scroll chat to bottom
+  useEffect(() => {
+    callChatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [callChatMessages]);
+
   // Adaptive bandwidth control - maintains quality while reducing network usage
   const applyBandwidthConstraints = async (sender: RTCRtpSender) => {
     try {
