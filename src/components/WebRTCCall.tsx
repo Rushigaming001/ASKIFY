@@ -44,6 +44,7 @@ export function WebRTCCall({
   const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [permissionError, setPermissionError] = useState(false);
   const [showMusicPlayer, setShowMusicPlayer] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isMobile] = useState(() => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
