@@ -675,7 +675,7 @@ const PublicChat = () => {
     touchStartRef.current = null;
     
     // Only trigger if horizontal swipe is dominant and significant
-    if (Math.abs(deltaX) > 60 && deltaY < 100) {
+    if (Math.abs(deltaX) > 30 && deltaY < 120) {
       if (deltaX < 0 && !showSocialPanel) {
         setShowSocialPanel(true); // Swipe left → open
       } else if (deltaX > 0 && showSocialPanel) {
