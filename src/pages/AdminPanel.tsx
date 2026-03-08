@@ -136,24 +136,19 @@ export default function AdminPanel() {
     try {
       const userId = activeSession.user.id;
 
-      const { data: allowed, error } = await supabase.rpc('is_owner_or_admin', {
+      const { data: allowed, error } = await supabase.rpc('is_owner', {
         _user_id: userId,
       });
 
       if (error) throw error;
 
       if (!allowed) {
-        toast.error(`Access denied for ${activeSession.user.email || 'your account'}. Admin or Owner privileges required.`);
+        toast.error(`Access denied for ${activeSession.user.email || 'your account'}. Owner privileges required.`);
         navigate('/');
         return;
       }
 
-      // Check if user is owner (for paid role assignment)
-      const { data: ownerCheck } = await supabase.rpc('is_owner', {
-        _user_id: userId,
-      });
-      setIsOwner(!!ownerCheck);
-
+      setIsOwner(true);
       setIsAdmin(true);
       loadUsers();
     } catch (error: any) {
@@ -383,7 +378,7 @@ export default function AdminPanel() {
           </Button>
           <div className="flex items-center gap-2">
             <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Admin Panel</h1>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Control Panel</h1>
           </div>
         </div>
 

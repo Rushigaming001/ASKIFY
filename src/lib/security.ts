@@ -139,7 +139,7 @@ export function useSecurityGuard() {
   return { blocked };
 }
 
-// Hook: Protect admin routes with server-side verification
+// Hook: Protect owner-only-only routes with server-side verification
 export function useAdminGuard() {
   const { user, session, isLoading } = useAuth();
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -162,7 +162,7 @@ export function useAdminGuard() {
 
     const verify = async () => {
       try {
-        const { data: allowed } = await supabase.rpc('is_owner_or_admin', {
+        const { data: allowed } = await supabase.rpc('is_owner', {
           _user_id: session.user.id,
         });
         

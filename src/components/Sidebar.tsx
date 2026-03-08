@@ -38,7 +38,7 @@ export function Sidebar({ isOpen, onToggle, alwaysOpen = false, collapsed = fals
   const { restrictions } = useUserRestrictions();
   const [renameDialog, setRenameDialog] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState('');
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [unreadPublicCount, setUnreadPublicCount] = useState(0);
 
@@ -91,19 +91,19 @@ export function Sidebar({ isOpen, onToggle, alwaysOpen = false, collapsed = fals
   const checkAdminStatus = async () => {
     const userId = user?.id;
     if (!userId) {
-      setIsAdmin(false);
+      setIsOwner(false);
       return;
     }
 
     try {
-      const { data, error } = await supabase.rpc('is_owner_or_admin', {
+      const { data, error } = await supabase.rpc('is_owner', {
         _user_id: userId,
       });
 
       if (error) throw error;
-      setIsAdmin(!!data);
+      setIsOwner(!!data);
     } catch {
-      setIsAdmin(false);
+      setIsOwner(false);
     }
   };
 
@@ -540,7 +540,7 @@ export function Sidebar({ isOpen, onToggle, alwaysOpen = false, collapsed = fals
                   <TooltipContent side="right">Settings</TooltipContent>
                 </Tooltip>
 
-                {isAdmin && (
+                {isOwner && (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button 
@@ -552,7 +552,7 @@ export function Sidebar({ isOpen, onToggle, alwaysOpen = false, collapsed = fals
                         <Shield className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent side="right">Admin Panel</TooltipContent>
+                    <TooltipContent side="right">Control Panel</TooltipContent>
                   </Tooltip>
                 )}
 
@@ -770,7 +770,7 @@ export function Sidebar({ isOpen, onToggle, alwaysOpen = false, collapsed = fals
                   Contact Us
                 </Button>
 
-                {isAdmin && (
+                {isOwner && (
                   <Button 
                     variant="ghost" 
                     className="w-full justify-start hover:bg-accent transition-all duration-200" 
@@ -778,7 +778,7 @@ export function Sidebar({ isOpen, onToggle, alwaysOpen = false, collapsed = fals
                     onClick={() => navigate('/admin')}
                   >
                     <Shield className="h-4 w-4 mr-2" />
-                    Admin Panel
+                    Control Panel
                   </Button>
                 )}
                 
@@ -1150,7 +1150,7 @@ export function Sidebar({ isOpen, onToggle, alwaysOpen = false, collapsed = fals
             Contact Us
           </Button>
 
-          {isAdmin && (
+          {isOwner && (
             <Button 
               variant="ghost" 
               className="w-full justify-start hover:bg-accent transition-all duration-200 hover:scale-[1.02]" 
@@ -1158,7 +1158,7 @@ export function Sidebar({ isOpen, onToggle, alwaysOpen = false, collapsed = fals
               onClick={() => navigate('/admin')}
             >
               <Shield className="h-4 w-4 mr-2" />
-              Admin Panel
+              Control Panel
             </Button>
           )}
           
