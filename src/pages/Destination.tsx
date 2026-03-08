@@ -64,7 +64,7 @@ const Destination = () => {
           {destinations.map((dest) => (
             <Card
               key={dest.path}
-              className="group cursor-pointer bg-card hover:bg-accent/50 border-border/50 hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-0.5 rounded-xl overflow-hidden"
+              className="group cursor-pointer bg-card hover:bg-accent/50 border-border/50 hover:border-primary/20 transition-colors duration-200 rounded-xl overflow-hidden"
               onClick={() => navigate(dest.path)}
             >
               <CardContent className="p-4 sm:p-5 flex flex-col items-start">
