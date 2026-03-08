@@ -523,6 +523,18 @@ const StaffMeeting = () => {
       {showChat && (
         <div className="w-80 border-l border-border flex flex-col bg-background">
           <div className="p-3 border-b border-border font-semibold text-sm">Meeting Chat</div>
+          
+          {/* AI Summary */}
+          {aiSummary && (
+            <div className="m-3 p-3 rounded-lg bg-primary/10 border border-primary/20">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-primary mb-1.5">
+                <Sparkles className="h-3.5 w-3.5" />
+                AI Meeting Summary
+              </div>
+              <p className="text-xs text-foreground whitespace-pre-wrap leading-relaxed">{aiSummary}</p>
+            </div>
+          )}
+
           <ScrollArea className="flex-1 p-3">
             <div className="space-y-3">
               {chatMessages.map(msg => (
