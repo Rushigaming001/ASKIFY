@@ -112,13 +112,42 @@ const Reels = () => {
     });
   }, [activeIndex, muted]);
 
-  // Track views
+  // Track views & check monetization milestones
   useEffect(() => {
     const reel = reels[activeIndex];
     if (!reel || !user) return;
+    // Don't count own views
+    if (reel.user_id === user.id) return;
     const timer = setTimeout(async () => {
-      await supabase.from('stories').update({ view_count: reel.view_count + 1 }).eq('id', reel.id);
-    }, 3000); // Count as view after 3 seconds
+      const newCount = reel.view_count + 1;
+      await supabase.from('stories').update({ view_count: newCount }).eq('id', reel.id);
+      
+      // Check if hit a 100-view milestone for coin reward
+      const milestone = Math.floor(newCount / 100) * 100;
+      if (milestone > 0 && newCount >= milestone && newCount < milestone + 1) {
+        // Try to award coins to the creator
+        const { error: earningError } = await supabase.from('reel_earnings').insert({
+          story_id: reel.id,
+          user_id: reel.user_id,
+          views_milestone: milestone,
+          coins_awarded: 5
+        });
+        // If insert succeeded (not duplicate), give coins
+        if (!earningError) {
+          await supabase.rpc('admin_give_coins', {
+            _admin_user_id: reel.user_id,
+            _to_user_id: reel.user_id,
+            _amount: 5,
+            _set_unlimited: false
+          }).catch(() => {
+            // Fallback: direct insert
+            supabase.from('user_coins')
+              .upsert({ user_id: reel.user_id, balance: 5 }, { onConflict: 'user_id' })
+              .then(() => {});
+          });
+        }
+      }
+    }, 3000);
     return () => clearTimeout(timer);
   }, [activeIndex, reels, user]);
 
