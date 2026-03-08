@@ -320,7 +320,7 @@ const YouTube = () => {
   if (showSearch) {
     return (
       <div className={ytDarkMode ? 'dark' : ''}>
-      <div className={`flex flex-col h-screen ${ytDarkMode ? 'bg-[#0f0f0f] text-white' : 'bg-white text-black'}`}>
+      <div className={`flex flex-col h-screen ${ytDarkMode ? 'bg-[#0f0f0f] text-white' : 'bg-white text-[#0f0f0f]'}`}>
         <div className="flex items-center gap-2 px-2 py-2.5 border-b border-border/30">
           <Button variant="ghost" size="icon" onClick={() => setShowSearch(false)} className="text-foreground">
             <ArrowLeft className="h-5 w-5" />
