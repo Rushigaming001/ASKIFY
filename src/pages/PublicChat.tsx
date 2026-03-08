@@ -871,59 +871,61 @@ const PublicChat = () => {
                       <DateSeparator date={message.created_at} />
                     )}
                     <div
-                      className={`flex gap-2.5 group ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'} ${isDeleted ? 'opacity-50' : ''} ${isGrouped ? 'mt-0.5' : 'mt-3'}`}
+                      className={`flex gap-3 group px-2 py-0.5 rounded-lg hover:bg-muted/30 transition-colors ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'} ${isDeleted ? 'opacity-50' : ''} ${isGrouped ? 'mt-0' : 'mt-4'}`}
                     >
                       {/* Avatar - only show for first in group */}
                       {!isGrouped ? (
                         <Avatar 
-                          className="h-8 w-8 flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+                          className="h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0 cursor-pointer ring-2 ring-transparent hover:ring-primary/50 transition-all shadow-sm"
                           onClick={() => setViewingProfile({ userId: message.user_id, userName: message.profiles?.name || 'User' })}
                         >
                           {message.profiles?.avatar_url ? (
                             <AvatarImage src={message.profiles.avatar_url} alt={message.profiles.name} />
                           ) : null}
-                          <AvatarFallback className="text-xs bg-muted">
+                          <AvatarFallback className="text-xs bg-muted font-semibold">
                             {message.profiles ? getInitials(message.profiles.name) : '??'}
                           </AvatarFallback>
                         </Avatar>
                       ) : (
-                        <div className="w-8 flex-shrink-0" />
+                        <div className="w-9 sm:w-10 flex-shrink-0" />
                       )}
-                      <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'} max-w-[75%]`}>
+                      <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'} max-w-[80%] sm:max-w-[70%]`}>
                         {!isGrouped && (
-                          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                            <span className="text-sm font-semibold">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className={`text-sm font-bold ${getRoleNameColor(message.user_role)}`}>
                               {isOwnMessage ? 'You' : (message.profiles?.name || 'Anonymous')}
                             </span>
                             {message.user_role && message.user_role !== 'user' && (
-                              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider border shadow-sm ${getRoleBadgeStyle(message.user_role)}`}>
+                              <span className={`text-[9px] px-2 py-0.5 rounded-full font-extrabold uppercase tracking-wider border shadow-sm ${getRoleBadgeStyle(message.user_role)}`}>
                                 {getRoleLabel(message.user_role)}
                               </span>
                             )}
-                            <span className="text-[11px] text-muted-foreground">
+                            <span className="text-[10px] text-muted-foreground/60">
                               {formatTime(message.created_at)}
                             </span>
                             {message.edited_at && (
-                              <span className="text-[11px] text-muted-foreground italic">(edited)</span>
+                              <span className="text-[10px] text-muted-foreground/50 italic">(edited)</span>
                             )}
                           </div>
                         )}
                         {/* Reply indicator */}
                         {replyMessage && (
-                          <div className={`text-xs text-muted-foreground mb-1 px-2 py-1 rounded bg-muted/50 border-l-2 border-primary max-w-full`}>
-                            <span className="font-medium">↩ {replyMessage.profiles?.name}: </span>
-                            <span className="truncate">{replyMessage.content.substring(0, 50)}{replyMessage.content.length > 50 ? '...' : ''}</span>
+                          <div className="text-xs text-muted-foreground mb-1.5 px-3 py-1.5 rounded-lg bg-muted/40 border-l-2 border-primary/60 max-w-full">
+                            <span className="font-semibold">↩ {replyMessage.profiles?.name}: </span>
+                            <span className="truncate opacity-80">{replyMessage.content.substring(0, 50)}{replyMessage.content.length > 50 ? '...' : ''}</span>
                           </div>
                         )}
                         <div className="flex items-start gap-1">
                           <div
-                            className={`rounded-2xl ${isGif ? 'p-0 bg-transparent' : 'px-3 py-1.5'} ${
+                            className={`rounded-[14px] ${isGif ? 'p-0 bg-transparent' : 'px-3.5 py-2'} ${
                               isDeleted 
-                                ? 'bg-destructive/20 text-destructive px-3 py-1.5'
+                                ? 'bg-destructive/10 text-destructive px-3.5 py-2 border border-destructive/20'
                                 : isGif ? '' 
+                                : message.user_role === 'owner'
+                                ? 'bg-gradient-to-br from-yellow-500/20 via-amber-500/15 to-orange-500/10 text-foreground border border-yellow-500/30 shadow-[0_2px_8px_rgba(255,215,0,0.15)]'
                                 : isOwnMessage
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-muted text-foreground'
+                                ? 'bg-primary text-primary-foreground shadow-sm'
+                                : 'bg-muted/80 text-foreground shadow-sm border border-border/30'
                             }`}
                           >
                             {message.image_url && !isDeleted && (
