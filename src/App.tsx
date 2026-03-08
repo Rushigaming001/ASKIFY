@@ -53,6 +53,7 @@ const App = () => {
             // Main app with authentication
             <AuthProvider>
               <ChatProvider>
+                <PushNotificationPrompt />
                 <Toaster />
                 <Sonner />
                 <Routes>
