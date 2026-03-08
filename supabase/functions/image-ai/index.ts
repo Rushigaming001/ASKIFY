@@ -54,16 +54,88 @@ serve(async (req) => {
     const { action, prompt, imageUrl, style, imageModel } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
-    // Pollinations image generation - free, unlimited, high quality
-    function generateWithPollinations(prompt: string, model: string): string {
-      // Best quality models on Pollinations
-      let pollinationsModel = model;
-      if (model === 'gemini' || !model) pollinationsModel = 'flux';
+    // Generate image using Lovable AI Gateway (Nano Banana model)
+    async function generateWithLovableAI(imagePrompt: string): Promise<string> {
+      if (!LOVABLE_API_KEY) {
+        throw new Error("AI image generation is not configured");
+      }
 
-      const encodedPrompt = encodeURIComponent(prompt);
+      console.log("Generating image with Lovable AI:", imagePrompt.substring(0, 100));
+
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash-image",
+          messages: [
+            {
+              role: "user",
+              content: imagePrompt
+            }
+          ],
+          modalities: ["image", "text"]
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error("Rate limited. Please wait a moment and try again.");
+        }
+        if (response.status === 402) {
+          throw new Error("Usage limit reached. Please try again later.");
+        }
+        const errText = await response.text();
+        console.error("AI Gateway error:", response.status, errText);
+        throw new Error("Image generation failed. Please try again.");
+      }
+
+      const data = await response.json();
+      const imageData = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+
+      if (!imageData) {
+        console.error("No image in response:", JSON.stringify(data).substring(0, 500));
+        throw new Error("No image was generated. Try a different prompt.");
+      }
+
+      return imageData;
+    }
+
+    // Fallback: Pollinations (verified fetch)
+    async function generateWithPollinationsVerified(imagePrompt: string, model: string): Promise<string> {
+      let pollinationsModel = model || 'flux';
+      const encodedPrompt = encodeURIComponent(imagePrompt);
       const seed = Date.now();
-      // Use 1024x1024 for high quality, enhanced=true for better output
-      return `https://image.pollinations.ai/prompt/${encodedPrompt}?model=${pollinationsModel}&width=1024&height=1024&nologo=true&seed=${seed}&enhance=true&quality=95`;
+      const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?model=${pollinationsModel}&width=1024&height=1024&nologo=true&seed=${seed}&enhance=true&quality=95`;
+      
+      // Actually fetch and verify the image
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error("Pollinations image generation failed");
+      }
+      
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.startsWith('image/')) {
+        throw new Error("Invalid image response from Pollinations");
+      }
+
+      // Convert to base64 data URL
+      const arrayBuffer = await response.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      
+      // Check if image has actual content (not blank - at least 10KB for a real image)
+      if (bytes.length < 10000) {
+        throw new Error("Generated image appears to be blank or invalid");
+      }
+
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      const base64 = btoa(binary);
+      return `data:${contentType};base64,${base64}`;
     }
 
     // Image analysis
@@ -81,7 +153,7 @@ serve(async (req) => {
           messages: [{
             role: "user",
             content: [
-              { type: "text", text: prompt || "Analyze this image in detail. Describe what you see, identify objects, people, colors, mood, and any notable features." },
+              { type: "text", text: prompt || "Analyze this image in detail." },
               { type: "image_url", image_url: { url: imageUrl } }
             ]
           }],
@@ -89,7 +161,7 @@ serve(async (req) => {
         }),
       });
 
-      if (!response.ok) throw new Error("Image analysis failed - please try again");
+      if (!response.ok) throw new Error("Image analysis failed");
 
       const data = await response.json();
       const analysis = data.choices?.[0]?.message?.content || "No analysis generated";
@@ -101,19 +173,40 @@ serve(async (req) => {
       });
     }
 
-    // Image generation - unlimited via Pollinations
+    // Image generation
     if (action === 'generate') {
       let fullPrompt = prompt;
-      if (style === 'ghibli') fullPrompt = `Studio Ghibli anime style, hand-drawn animation aesthetic, soft pastel colors, dreamy atmosphere, Hayao Miyazaki style: ${prompt}`;
-      else if (style === 'realistic') fullPrompt = `Ultra photorealistic, 8K resolution, high detail, professional photography, masterpiece: ${prompt}`;
-      else if (style === 'artistic') fullPrompt = `Digital art masterpiece, vibrant colors, artistic style, detailed illustration, trending on artstation: ${prompt}`;
-      else if (style === 'abstract') fullPrompt = `Abstract art, geometric shapes, bold colors, modern art style, creative: ${prompt}`;
-      else fullPrompt = `High quality, detailed, professional, masterpiece: ${prompt}`;
+      if (style === 'ghibli') fullPrompt = `Studio Ghibli anime style, hand-drawn animation, soft pastel colors, Hayao Miyazaki style: ${prompt}`;
+      else if (style === 'realistic') fullPrompt = `Ultra photorealistic, 8K resolution, professional photography: ${prompt}`;
+      else if (style === 'artistic') fullPrompt = `Digital art masterpiece, vibrant colors, detailed illustration: ${prompt}`;
+      else if (style === 'abstract') fullPrompt = `Abstract art, geometric shapes, bold colors, modern art: ${prompt}`;
+      else fullPrompt = `High quality, detailed: ${prompt}`;
+
+      // Add model-specific hints
+      if (imageModel === 'flux-anime') fullPrompt = `Anime style, Japanese animation: ${prompt}`;
+      else if (imageModel === 'flux-3d') fullPrompt = `3D rendered, high quality 3D art: ${prompt}`;
+      else if (imageModel === 'flux-realism') fullPrompt = `Photorealistic, lifelike, ultra detailed photograph: ${prompt}`;
 
       const selectedModel = imageModel || 'flux';
-      const generatedUrl = generateWithPollinations(fullPrompt, selectedModel);
+      let generatedUrl: string;
 
-      await supabase.from('usage_logs').insert({ user_id: user.id, model_id: `pollinations-${selectedModel}`, mode: 'image-generation' });
+      try {
+        // Primary: Use Lovable AI Gateway
+        generatedUrl = await generateWithLovableAI(`Generate this image: ${fullPrompt}`);
+        console.log("Image generated via Lovable AI");
+      } catch (aiError) {
+        console.error("Lovable AI image gen failed:", aiError);
+        try {
+          // Fallback: Pollinations with verification
+          generatedUrl = await generateWithPollinationsVerified(fullPrompt, selectedModel);
+          console.log("Image generated via Pollinations fallback");
+        } catch (pollError) {
+          console.error("Pollinations fallback failed:", pollError);
+          throw new Error("Image generation failed. Please try a different prompt or try again later.");
+        }
+      }
+
+      await supabase.from('usage_logs').insert({ user_id: user.id, model_id: `ai-image-${selectedModel}`, mode: 'image-generation' });
 
       return new Response(JSON.stringify({ imageUrl: generatedUrl }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -122,14 +215,52 @@ serve(async (req) => {
 
     // Image editing
     if (action === 'edit' && imageUrl) {
-      const editPrompt = `${prompt}, based on this image: ${imageUrl}`;
-      const generatedUrl = generateWithPollinations(editPrompt, 'flux');
+      if (!LOVABLE_API_KEY) throw new Error("AI image editing is not configured");
 
-      await supabase.from('usage_logs').insert({ user_id: user.id, model_id: 'pollinations-edit', mode: 'image-edit' });
+      try {
+        const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash-image",
+            messages: [
+              {
+                role: "user",
+                content: [
+                  { type: "text", text: `Edit this image: ${prompt}` },
+                  { type: "image_url", image_url: { url: imageUrl } }
+                ]
+              }
+            ],
+            modalities: ["image", "text"]
+          }),
+        });
 
-      return new Response(JSON.stringify({ imageUrl: generatedUrl }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+        if (!response.ok) {
+          if (response.status === 429) throw new Error("Rate limited. Please wait and try again.");
+          if (response.status === 402) throw new Error("Usage limit reached.");
+          throw new Error("Image editing failed");
+        }
+
+        const data = await response.json();
+        const editedImageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+
+        if (!editedImageUrl) {
+          throw new Error("No edited image was generated. Try different instructions.");
+        }
+
+        await supabase.from('usage_logs').insert({ user_id: user.id, model_id: 'ai-image-edit', mode: 'image-edit' });
+
+        return new Response(JSON.stringify({ imageUrl: editedImageUrl }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      } catch (error) {
+        console.error("Image edit error:", error);
+        throw error;
+      }
     }
 
     return new Response(JSON.stringify({ error: "Invalid action" }), {
@@ -140,7 +271,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Image AI error:", error);
     return new Response(
-      JSON.stringify({ error: "An error occurred processing your request. Please try again." }),
+      JSON.stringify({ error: error instanceof Error ? error.message : "An error occurred. Please try again." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
