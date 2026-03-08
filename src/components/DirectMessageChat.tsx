@@ -361,9 +361,6 @@ export function DirectMessageChat({ recipientId, recipientName, onClose }: Direc
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <Button size="sm" variant="ghost" onClick={() => setShowStatusBar(!showStatusBar)} title="Status" className="h-8 w-8 p-0">
-            <CircleDot className="h-4 w-4" />
-          </Button>
           <Button size="sm" variant="ghost" onClick={() => setShowSnapSender(true)} title="Send Snap" className="h-8 w-8 p-0 text-yellow-600 dark:text-yellow-400">
             <Camera className="h-4 w-4" />
           </Button>
@@ -378,12 +375,6 @@ export function DirectMessageChat({ recipientId, recipientName, onClose }: Direc
           </Button>
         </div>
       </div>
-
-      {showStatusBar && (
-        <div className="border-b border-border">
-          <StoriesViewer />
-        </div>
-      )}
 
       <ScrollArea className="flex-1" ref={scrollRef}>
         <div className="p-4 space-y-1">
