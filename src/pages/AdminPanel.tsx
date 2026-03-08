@@ -378,7 +378,7 @@ export default function AdminPanel() {
           </Button>
           <div className="flex items-center gap-2">
             <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Admin Panel</h1>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Control Panel</h1>
           </div>
         </div>
 
