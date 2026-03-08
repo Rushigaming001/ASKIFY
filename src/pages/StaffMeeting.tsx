@@ -64,7 +64,7 @@ const StaffMeeting = () => {
         .select('role')
         .eq('user_id', user.id);
 
-      const roles = data?.map(r => r.role) || [];
+      const roles = (data?.map(r => r.role) || []) as string[];
       const hasAccess = roles.some(r => STAFF_ROLES.includes(r));
       setIsAuthorized(hasAccess);
 
