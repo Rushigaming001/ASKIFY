@@ -770,7 +770,7 @@ export function Sidebar({ isOpen, onToggle, alwaysOpen = false, collapsed = fals
                   Contact Us
                 </Button>
 
-                {isAdmin && (
+                {isOwner && (
                   <Button 
                     variant="ghost" 
                     className="w-full justify-start hover:bg-accent transition-all duration-200" 
@@ -778,7 +778,7 @@ export function Sidebar({ isOpen, onToggle, alwaysOpen = false, collapsed = fals
                     onClick={() => navigate('/admin')}
                   >
                     <Shield className="h-4 w-4 mr-2" />
-                    Admin Panel
+                    Control Panel
                   </Button>
                 )}
                 
