@@ -44,21 +44,13 @@ const Destination = () => {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Subtle background accents */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/[0.03] rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-primary/[0.03] rounded-full blur-3xl translate-y-1/2 -translate-x-1/3" />
-      </div>
 
       <div className="relative z-10 container mx-auto px-4 sm:px-6 py-8 sm:py-12 min-h-screen flex flex-col">
         {/* Header */}
         <header className="text-center mb-10 sm:mb-14">
           <div className="inline-flex items-center justify-center mb-5">
-            <div className="relative">
-              <div className="absolute -inset-2 bg-primary/10 rounded-2xl blur-xl" />
-              <div className="relative p-3 rounded-2xl bg-card border border-border/50 shadow-lg">
-                <img src={askifyLogoNew} alt="Askify" className="h-12 w-12 sm:h-14 sm:w-14 object-contain" />
-              </div>
+            <div className="relative p-3 rounded-2xl bg-card border border-border/50 shadow-lg">
+              <img src={askifyLogoNew} alt="Askify" className="h-12 w-12 sm:h-14 sm:w-14 object-contain" />
             </div>
           </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-foreground mb-2">
@@ -72,7 +64,7 @@ const Destination = () => {
           {destinations.map((dest) => (
             <Card
               key={dest.path}
-              className="group cursor-pointer bg-card hover:bg-accent/50 border-border/50 hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-0.5 rounded-xl overflow-hidden"
+              className="group cursor-pointer bg-card hover:bg-accent/50 border-border/50 hover:border-primary/20 transition-colors duration-200 rounded-xl overflow-hidden"
               onClick={() => navigate(dest.path)}
             >
               <CardContent className="p-4 sm:p-5 flex flex-col items-start">
