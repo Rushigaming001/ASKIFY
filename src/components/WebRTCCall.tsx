@@ -92,10 +92,14 @@ export function WebRTCCall({
 
     const pc = new RTCPeerConnection(configuration);
 
-    // Add local tracks
+    // Add local tracks with bandwidth optimization
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(track => {
-        pc.addTrack(track, localStreamRef.current!);
+        const sender = pc.addTrack(track, localStreamRef.current!);
+        // Apply bandwidth constraints after connection
+        if (track.kind === 'video') {
+          applyBandwidthConstraints(sender);
+        }
       });
     }
 
