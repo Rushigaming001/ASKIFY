@@ -1178,26 +1178,23 @@ const PublicChat = () => {
         </header>
 
         <ScrollArea className="flex-1">
-          <div className="p-4 space-y-6">
-            {/* Stories / Status */}
-            <div>
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Stories & Status</h2>
-              <StoriesViewer />
-            </div>
-
-            {/* Action Cards */}
-            <div className="grid grid-cols-2 gap-3">
+          <div className="p-4 space-y-5">
+            {/* Quick Action Pills */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              <button
+                onClick={() => {/* StoriesViewer handles status internally */}}
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap shadow-sm"
+              >
+                <CircleDot className="h-3.5 w-3.5" />
+                Status
+              </button>
               <button
                 onClick={() => { setShowUsersList(true); setShowSocialPanel(false); }}
-                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border border-border hover:border-primary/30 hover:shadow-md transition-all"
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-border bg-card text-foreground text-sm font-medium whitespace-nowrap hover:bg-accent transition-colors"
               >
-                <div className="h-12 w-12 rounded-full bg-amber-500/10 flex items-center justify-center">
-                  <Camera className="h-6 w-6 text-amber-500" />
-                </div>
-                <span className="text-sm font-medium">Send Snap</span>
-                <span className="text-[10px] text-muted-foreground">Disappearing photos</span>
+                <Camera className="h-3.5 w-3.5 text-amber-500" />
+                Snap
               </button>
-
               <button
                 onClick={() => {
                   const input = document.createElement('input');
@@ -1224,43 +1221,34 @@ const PublicChat = () => {
                   };
                   input.click();
                 }}
-                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border border-border hover:border-primary/30 hover:shadow-md transition-all"
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-border bg-card text-foreground text-sm font-medium whitespace-nowrap hover:bg-accent transition-colors"
               >
-                <div className="h-12 w-12 rounded-full bg-purple-500/10 flex items-center justify-center">
-                  <Clapperboard className="h-6 w-6 text-purple-500" />
-                </div>
-                <span className="text-sm font-medium">Post Reel</span>
-                <span className="text-[10px] text-muted-foreground">Share videos</span>
+                <Clapperboard className="h-3.5 w-3.5 text-purple-500" />
+                Reel
               </button>
-
               <button
-                onClick={() => { navigate('/reels'); }}
-                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border border-border hover:border-primary/30 hover:shadow-md transition-all"
+                onClick={() => navigate('/reels')}
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-border bg-card text-foreground text-sm font-medium whitespace-nowrap hover:bg-accent transition-colors"
               >
-                <div className="h-12 w-12 rounded-full bg-pink-500/10 flex items-center justify-center">
-                  <Clapperboard className="h-6 w-6 text-pink-500" />
-                </div>
-                <span className="text-sm font-medium">View Reels</span>
-                <span className="text-[10px] text-muted-foreground">Watch content</span>
-              </button>
-
-              <button
-                onClick={() => { setShowSendCoins(true); setShowSocialPanel(false); }}
-                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border border-border hover:border-primary/30 hover:shadow-md transition-all"
-              >
-                <div className="h-12 w-12 rounded-full bg-amber-500/10 flex items-center justify-center">
-                  <Coins className="h-6 w-6 text-amber-500" />
-                </div>
-                <span className="text-sm font-medium">Send Coins</span>
-                <span className="text-[10px] text-muted-foreground">Gift to friends</span>
+                <Clapperboard className="h-3.5 w-3.5 text-destructive" />
+                View Reels
               </button>
             </div>
 
-            {/* Quick Links */}
+            {/* Stories / Status */}
             <div>
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Quick Links</h2>
+              <StoriesViewer />
+            </div>
+
+            {/* More Actions */}
+            <div>
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">More</h2>
               <div className="space-y-1">
-                <Button variant="ghost" className="w-full justify-start gap-3 h-11" onClick={() => { navigate('/friends-chat'); }}>
+                <Button variant="ghost" className="w-full justify-start gap-3 h-11" onClick={() => { setShowSendCoins(true); setShowSocialPanel(false); }}>
+                  <Coins className="h-4 w-4 text-amber-500" />
+                  Send Coins
+                </Button>
+                <Button variant="ghost" className="w-full justify-start gap-3 h-11" onClick={() => navigate('/friends-chat')}>
                   <Lock className="h-4 w-4 text-primary" />
                   Friends Chat
                 </Button>
