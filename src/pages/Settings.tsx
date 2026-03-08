@@ -258,7 +258,7 @@ const Settings = () => {
           }
         },
         { 
-          icon: RefreshCw, label: 'Force Refresh', subtitle: 'Clear cache & reload',
+          icon: RefreshCw, label: 'Update the app', subtitle: 'Clear cache & reload',
           onClick: async () => {
             toast({ title: 'Refreshing...' });
             if ('caches' in window) {
