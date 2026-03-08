@@ -829,7 +829,7 @@ const PublicChat = () => {
         </div>
 
         <ScrollArea className="flex-1 chat-scroll" ref={scrollRef}>
-          <div className="p-4 space-y-1">
+          <div className="px-3 sm:px-6 py-3 space-y-0.5">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center py-12">
                 <Users className="h-16 w-16 text-muted-foreground/50 mb-4" />
