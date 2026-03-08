@@ -139,7 +139,7 @@ export function useSecurityGuard() {
   return { blocked };
 }
 
-// Hook: Protect admin routes with server-side verification
+// Hook: Protect owner-only routes with server-side verification
 export function useAdminGuard() {
   const { user, session, isLoading } = useAuth();
   const [isAuthorized, setIsAuthorized] = useState(false);
