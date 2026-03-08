@@ -101,8 +101,16 @@ const PublicChat = () => {
   const [coinRecipient, setCoinRecipient] = useState<{ id: string; name: string } | null>(null);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showSocialPanel, setShowSocialPanel] = useState(false);
+  const [mentionNotifications, setMentionNotifications] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const pingAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Initialize ping sound
+  useEffect(() => {
+    pingAudioRef.current = new Audio('/sounds/mention-ping.mp3');
+    pingAudioRef.current.volume = 0.5;
+  }, []);
   
   // Typing indicator
   const { sendTyping } = useTypingIndicator('public-chat', user?.id, user?.name);
