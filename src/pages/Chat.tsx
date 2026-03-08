@@ -190,6 +190,10 @@ const Chat = () => {
   };
 
   const handleModelChange = (model: string) => {
+    if (model === 'offline-ai') {
+      navigate('/offline-ai');
+      return;
+    }
     if (!modelAccess[model]) {
       toast({
         title: 'Access Denied',
