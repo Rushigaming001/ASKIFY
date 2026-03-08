@@ -44,6 +44,8 @@ const StaffMeeting = () => {
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [userRole, setUserRole] = useState('');
+  const [aiSummary, setAiSummary] = useState('');
+  const [isSummarizing, setIsSummarizing] = useState(false);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
