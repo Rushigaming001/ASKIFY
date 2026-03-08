@@ -109,16 +109,4 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'web-llm': ['@mlc-ai/web-llm'],
-        },
-      },
-    },
-  },
-  optimizeDeps: {
-    exclude: ['@mlc-ai/web-llm'],
-  },
 }));
