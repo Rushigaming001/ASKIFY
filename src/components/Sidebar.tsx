@@ -736,6 +736,19 @@ export function Sidebar({ isOpen, onToggle, alwaysOpen = false, collapsed = fals
                     </Badge>
                   )}
                 </Button>
+
+                {/* Staff Meeting - only visible to staff roles */}
+                {(isOwner || ['ceo', 'founder', 'co_founder', 'admin', 'sr_admin', 'moderator', 'sr_moderator'].includes(userRole || '')) && (
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start hover:bg-accent transition-all duration-200" 
+                    size="sm"
+                    onClick={() => navigate('/staff-meeting')}
+                  >
+                    <UsersIcon className="h-4 w-4 mr-2" />
+                    Staff Meeting
+                  </Button>
+                )}
                 
                 <Button 
                   variant="ghost" 
