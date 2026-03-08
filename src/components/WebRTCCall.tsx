@@ -209,8 +209,32 @@ export function WebRTCCall({
 
   const initializeCall = async () => {
     try {
-      // Get user media
-      const constraints: MediaStreamConstraints = {
+      // First check if permissions are available
+      let hasPermission = true;
+      try {
+        if (navigator.permissions) {
+          const micPerm = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+          if (micPerm.state === 'denied') hasPermission = false;
+          if (callType === 'video') {
+            const camPerm = await navigator.permissions.query({ name: 'camera' as PermissionName });
+            if (camPerm.state === 'denied') hasPermission = false;
+          }
+        }
+      } catch {}
+
+      if (!hasPermission) {
+        toast({
+          title: 'Permissions Required',
+          description: 'Camera/microphone access was denied. Please enable it in your browser or device settings, then try again.',
+          variant: 'destructive'
+        });
+        onClose();
+        return;
+      }
+
+      // Try with full constraints first, fallback to audio-only if video fails
+      let stream: MediaStream;
+      const fullConstraints: MediaStreamConstraints = {
         video: callType === 'video' ? {
           width: { ideal: 1280, max: 1920 },
           height: { ideal: 720, max: 1080 },
@@ -225,7 +249,24 @@ export function WebRTCCall({
         }
       };
 
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(fullConstraints);
+      } catch (firstErr: any) {
+        // If video failed, try audio-only as fallback for video calls
+        if (callType === 'video' && firstErr.name !== 'NotAllowedError') {
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            toast({ title: 'Note', description: 'Using basic camera quality due to device limitations.' });
+          } catch {
+            // Last resort: audio only
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            setIsVideoOn(false);
+            toast({ title: 'Audio Only', description: 'Camera not available. Joined with audio only.' });
+          }
+        } else {
+          throw firstErr;
+        }
+      }
       localStreamRef.current = stream;
 
       if (localVideoRef.current && callType === 'video') {
