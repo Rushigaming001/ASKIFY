@@ -84,9 +84,13 @@ export function Sidebar({ isOpen, onToggle, alwaysOpen = false, collapsed = fals
   }, [user]);
 
   useEffect(() => {
-    checkAdminStatus();
-    fetchUserRole();
-  }, [user]);
+    if (user?.id) {
+      checkAdminStatus();
+      fetchUserRole();
+    } else {
+      setIsOwner(false);
+    }
+  }, [user?.id]);
 
   const checkAdminStatus = async () => {
     const userId = user?.id;
