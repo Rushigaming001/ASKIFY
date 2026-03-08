@@ -63,6 +63,58 @@ export function WebRTCCall({
     };
   }, [isOpen]);
 
+  // Adaptive bandwidth control - maintains quality while reducing network usage
+  const applyBandwidthConstraints = async (sender: RTCRtpSender) => {
+    try {
+      const params = sender.getParameters();
+      if (!params.encodings || params.encodings.length === 0) {
+        params.encodings = [{}];
+      }
+      // Use simulcast-like approach: cap bitrate but keep resolution high
+      params.encodings[0].maxBitrate = callType === 'video' ? 1500000 : 128000; // 1.5Mbps video, 128kbps audio
+      params.encodings[0].scaleResolutionDownBy = 1; // No downscale - keep full quality
+      if (callType === 'video') {
+        params.encodings[0].maxFramerate = 30;
+      }
+      await sender.setParameters(params);
+    } catch (e) {
+      console.warn('Could not apply bandwidth constraints:', e);
+    }
+  };
+
+  // Monitor and adapt bandwidth based on network conditions
+  const startBandwidthMonitor = (pc: RTCPeerConnection) => {
+    const monitor = setInterval(async () => {
+      try {
+        const stats = await pc.getStats();
+        stats.forEach((report) => {
+          if (report.type === 'outbound-rtp' && report.kind === 'video') {
+            const senders = pc.getSenders();
+            const videoSender = senders.find(s => s.track?.kind === 'video');
+            if (videoSender && report.qualityLimitationReason === 'bandwidth') {
+              // Network congested - temporarily reduce bitrate
+              const params = videoSender.getParameters();
+              if (params.encodings?.[0]) {
+                params.encodings[0].maxBitrate = 800000; // Drop to 800kbps
+                videoSender.setParameters(params).catch(() => {});
+              }
+            } else if (videoSender && report.qualityLimitationReason === 'none') {
+              // Network is fine - restore full quality
+              const params = videoSender.getParameters();
+              if (params.encodings?.[0] && (params.encodings[0].maxBitrate || 0) < 1500000) {
+                params.encodings[0].maxBitrate = 1500000;
+                videoSender.setParameters(params).catch(() => {});
+              }
+            }
+          }
+        });
+      } catch {}
+    }, 5000);
+    return monitor;
+  };
+
+  const bandwidthMonitorsRef = useRef<number[]>([]);
+
   const createPeerConnection = (targetUserId: string): RTCPeerConnection => {
     const configuration: RTCConfiguration = {
       iceServers: [
