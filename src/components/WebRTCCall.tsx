@@ -113,7 +113,7 @@ export function WebRTCCall({
     return monitor;
   };
 
-  const bandwidthMonitorsRef = useRef<number[]>([]);
+  const bandwidthMonitorsRef = useRef<ReturnType<typeof setInterval>[]>([]);
 
   const createPeerConnection = (targetUserId: string): RTCPeerConnection => {
     const configuration: RTCConfiguration = {
