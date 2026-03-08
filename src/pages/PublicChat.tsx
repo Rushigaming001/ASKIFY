@@ -1005,19 +1005,19 @@ const PublicChat = () => {
           </div>
         </ScrollArea>
 
-        <div className="border-t border-border p-4 bg-background">
+        <div className="border-t border-border/50 px-3 sm:px-6 py-3 bg-card/95 backdrop-blur-md">
           {replyingTo && (
-            <div className="mb-2 flex items-center gap-2 text-xs bg-muted/50 p-2 rounded border-l-2 border-primary">
-              <Reply className="h-3 w-3" />
+            <div className="mb-2 flex items-center gap-2 text-xs bg-muted/40 p-2.5 rounded-lg border-l-2 border-primary/60">
+              <Reply className="h-3 w-3 text-primary" />
               <span className="text-muted-foreground">Replying to</span>
-              <span className="font-medium">{replyingTo.profiles?.name}</span>
-              <span className="text-muted-foreground truncate max-w-[200px]">
+              <span className="font-semibold">{replyingTo.profiles?.name}</span>
+              <span className="text-muted-foreground/70 truncate max-w-[200px]">
                 {replyingTo.content.substring(0, 30)}{replyingTo.content.length > 30 ? '...' : ''}
               </span>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-4 w-4 ml-auto"
+                className="h-5 w-5 ml-auto hover:bg-destructive/10 hover:text-destructive"
                 onClick={() => setReplyingTo(null)}
               >
                 <X className="h-3 w-3" />
@@ -1025,8 +1025,8 @@ const PublicChat = () => {
             </div>
           )}
           <TypingIndicator channelId="public-chat" currentUserId={user?.id} />
-          <div className="mb-2 text-xs text-muted-foreground">
-            Tip: /play [song] to play music • /askify [question] for AI help • Type @ to mention users
+          <div className="mb-1.5 text-[10px] text-muted-foreground/50">
+            /play [song] to play music • /askify [question] for AI help • @ to mention
           </div>
           <EnhancedChatInput
             onSend={(content, fileUrl) => handleSendMediaMessage(content, fileUrl)}
