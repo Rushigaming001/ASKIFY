@@ -629,22 +629,24 @@ const PublicChat = () => {
   // Role badge helper function
   const getRoleBadgeStyle = (role: string) => {
     const styles: Record<string, string> = {
-      owner: 'bg-gradient-to-r from-yellow-400 to-amber-500 text-white border-yellow-300 shadow-yellow-500/30',
-      founder: 'bg-gradient-to-r from-amber-400 to-orange-500 text-white border-amber-300 shadow-amber-500/30',
-      co_founder: 'bg-gradient-to-r from-orange-400 to-red-500 text-white border-orange-300 shadow-orange-500/30',
-      ceo: 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-purple-300 shadow-purple-500/30',
-      admin: 'bg-gradient-to-r from-red-500 to-rose-600 text-white border-red-300 shadow-red-500/30',
-      moderator: 'bg-gradient-to-r from-orange-500 to-amber-600 text-white border-orange-300 shadow-orange-500/30',
-      friend: 'bg-gradient-to-r from-pink-400 to-rose-500 text-white border-pink-300 shadow-pink-500/30',
-      vip: 'bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-500 text-black border-yellow-200 shadow-yellow-500/40',
-      premium: 'bg-gradient-to-r from-fuchsia-500 to-pink-600 text-white border-fuchsia-300 shadow-fuchsia-500/30',
-      platinum: 'bg-gradient-to-r from-slate-300 via-cyan-200 to-slate-400 text-slate-800 border-cyan-200 shadow-cyan-500/30',
-      gold: 'bg-gradient-to-r from-yellow-400 to-amber-500 text-white border-yellow-300 shadow-yellow-500/30',
-      silver: 'bg-gradient-to-r from-slate-300 to-gray-400 text-slate-700 border-slate-200 shadow-slate-500/20',
-      elite: 'bg-gradient-to-r from-violet-600 to-purple-700 text-white border-violet-400 shadow-violet-500/30',
-      pro: 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-blue-300 shadow-blue-500/30',
-      plus: 'bg-gradient-to-r from-cyan-400 to-blue-500 text-white border-cyan-300 shadow-cyan-500/30',
-      basic: 'bg-gradient-to-r from-emerald-400 to-green-500 text-white border-emerald-300 shadow-emerald-500/30',
+      owner: 'bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-500 text-black border-yellow-400/50 shadow-[0_0_8px_rgba(255,215,0,0.4)]',
+      founder: 'bg-gradient-to-r from-amber-400 to-orange-500 text-white border-amber-300/50 shadow-[0_0_6px_rgba(245,158,11,0.3)]',
+      co_founder: 'bg-gradient-to-r from-orange-400 to-red-500 text-white border-orange-300/50',
+      ceo: 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-purple-300/50 shadow-[0_0_6px_rgba(168,85,247,0.3)]',
+      admin: 'bg-gradient-to-r from-red-500 to-rose-600 text-white border-red-400/50 shadow-[0_0_6px_rgba(239,68,68,0.3)]',
+      sr_admin: 'bg-gradient-to-r from-red-600 to-rose-700 text-white border-red-400/50',
+      moderator: 'bg-gradient-to-r from-orange-500 to-amber-600 text-white border-orange-300/50',
+      sr_moderator: 'bg-gradient-to-r from-orange-600 to-amber-700 text-white border-orange-400/50',
+      friend: 'bg-gradient-to-r from-pink-400 to-rose-500 text-white border-pink-300/50',
+      vip: 'bg-gradient-to-r from-emerald-400 to-green-500 text-white border-emerald-300/50 shadow-[0_0_6px_rgba(52,211,153,0.3)]',
+      premium: 'bg-gradient-to-r from-fuchsia-500 to-pink-600 text-white border-fuchsia-300/50',
+      platinum: 'bg-gradient-to-r from-slate-300 via-cyan-200 to-slate-400 text-slate-800 border-cyan-200/50',
+      gold: 'bg-gradient-to-r from-yellow-400 to-amber-500 text-black border-yellow-300/50',
+      silver: 'bg-gradient-to-r from-slate-300 to-gray-400 text-slate-700 border-slate-200/50',
+      elite: 'bg-gradient-to-r from-violet-600 to-purple-700 text-white border-violet-400/50',
+      pro: 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-blue-300/50',
+      plus: 'bg-gradient-to-r from-cyan-400 to-blue-500 text-white border-cyan-300/50',
+      basic: 'bg-gradient-to-r from-emerald-400 to-green-500 text-white border-emerald-300/50',
     };
     return styles[role] || 'bg-muted text-muted-foreground border-border';
   };
@@ -656,7 +658,9 @@ const PublicChat = () => {
       co_founder: '✦ CO-FOUNDER',
       ceo: '💎 CEO',
       admin: '🛡️ ADMIN',
+      sr_admin: '🛡️ SR.ADMIN',
       moderator: '⚔️ MOD',
+      sr_moderator: '⚔️ SR.MOD',
       friend: '💖 FRIEND',
       vip: '✨ VIP',
       premium: '💫 PREMIUM',
@@ -669,6 +673,32 @@ const PublicChat = () => {
       basic: '✓ BASIC',
     };
     return labels[role] || role.toUpperCase();
+  };
+
+  // Get username color based on role (Minecraft-style)
+  const getRoleNameColor = (role?: string) => {
+    if (!role || role === 'user') return '';
+    const colors: Record<string, string> = {
+      owner: 'text-yellow-500',
+      founder: 'text-amber-500',
+      co_founder: 'text-orange-500',
+      ceo: 'text-purple-500',
+      admin: 'text-red-500',
+      sr_admin: 'text-red-600',
+      moderator: 'text-orange-500',
+      sr_moderator: 'text-orange-600',
+      vip: 'text-emerald-500',
+      premium: 'text-fuchsia-500',
+      platinum: 'text-cyan-400',
+      gold: 'text-yellow-500',
+      silver: 'text-slate-400',
+      elite: 'text-violet-500',
+      pro: 'text-blue-500',
+      plus: 'text-cyan-500',
+      friend: 'text-pink-500',
+      basic: 'text-green-500',
+    };
+    return colors[role] || '';
   };
 
   // Swipe handlers for social panel
