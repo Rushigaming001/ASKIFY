@@ -37,6 +37,7 @@ export function WebRTCCall({
   const [isVideoOn, setIsVideoOn] = useState(callType === 'video');
   const [isMicOn, setIsMicOn] = useState(true);
   const [isConnecting, setIsConnecting] = useState(true);
+  const [callReady, setCallReady] = useState(false); // NEW: user must click to start
   const [participants, setParticipants] = useState<Array<{ user_id: string; name: string }>>([]);
   const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
@@ -53,14 +54,19 @@ export function WebRTCCall({
   const audioContextRef = useRef<AudioContext | null>(null);
   const [callId] = useState(() => `call-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
 
+  // CRITICAL: Only cleanup on unmount/close — do NOT auto-call getUserMedia here
   useEffect(() => {
-    if (isOpen) {
-      initializeCall();
-    }
-
     return () => {
       cleanup();
     };
+  }, []);
+
+  // Reset state when dialog opens/closes
+  useEffect(() => {
+    if (!isOpen) {
+      setCallReady(false);
+      setIsConnecting(true);
+    }
   }, [isOpen]);
 
   // Adaptive bandwidth control - maintains quality while reducing network usage
@@ -281,6 +287,7 @@ export function WebRTCCall({
       }
 
       setIsConnecting(false);
+      setCallReady(true);
     } catch (error: any) {
       console.error('Error initializing call:', error);
       const isPermissionDenied = error?.name === 'NotAllowedError';
@@ -707,6 +714,35 @@ export function WebRTCCall({
   return (
     <Dialog open={isOpen} onOpenChange={handleEndCall}>
       <DialogContent className="max-w-5xl h-[85vh] p-0">
+        {!callReady ? (
+          /* PRE-CALL SCREEN — getUserMedia is triggered by button click (user gesture) */
+          <div className="flex flex-col items-center justify-center h-full gap-6 p-8">
+            <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center">
+              {callType === 'video' ? (
+                <Video className="h-12 w-12 text-primary" />
+              ) : (
+                <Mic className="h-12 w-12 text-primary" />
+              )}
+            </div>
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl font-bold">{callType === 'video' ? 'Video' : 'Voice'} Call</h2>
+              <p className="text-muted-foreground">with {recipientName}</p>
+            </div>
+            <p className="text-sm text-muted-foreground text-center max-w-sm">
+              Tap the button below to allow camera and microphone access and join the call.
+            </p>
+            <div className="flex gap-3">
+              <Button variant="outline" size="lg" onClick={handleEndCall}>
+                Cancel
+              </Button>
+              <Button size="lg" className="gap-2 px-8" onClick={initializeCall}>
+                {callType === 'video' ? <Video className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                Join Call
+              </Button>
+            </div>
+          </div>
+        ) : (
+        <>
         <DialogHeader className="p-4 border-b">
           <DialogTitle className="flex items-center gap-3">
             <span>
@@ -873,6 +909,8 @@ export function WebRTCCall({
             </Button>
           </div>
         </div>
+        </>
+        )}
       </DialogContent>
     </Dialog>
   );
