@@ -379,6 +379,14 @@ export function WebRTCCall({
           await handleIceCandidate(payload);
         }
       })
+      .on('broadcast', { event: 'call-chat' }, ({ payload }) => {
+        if (payload && payload.name) {
+          setCallChatMessages(prev => {
+            if (prev.some(m => m.id === payload.id)) return prev;
+            return [...prev, payload];
+          });
+        }
+      })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           const { data: profile } = await supabase
