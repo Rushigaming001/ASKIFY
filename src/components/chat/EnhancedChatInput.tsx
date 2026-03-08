@@ -317,13 +317,25 @@ export function EnhancedChatInput({
         </Popover>
 
         {/* Message Input */}
-        <Input
-          value={message}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-          disabled={disabled || isUploading}
-          className="flex-1"
+        {profiles.length > 0 ? (
+          <MentionInput
+            value={message}
+            onChange={(val) => { setMessage(val); onTyping?.(); }}
+            onSubmit={(e) => { e.preventDefault(); handleSend(); }}
+            placeholder={placeholder}
+            disabled={disabled || isUploading}
+            profiles={profiles}
+            className="flex-1"
+          />
+        ) : (
+          <Input
+            value={message}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            disabled={disabled || isUploading}
+            className="flex-1"
+          />
         />
 
         {/* Emoji Picker */}
