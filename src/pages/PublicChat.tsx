@@ -824,8 +824,8 @@ const PublicChat = () => {
         </header>
 
         {/* Swipe hint indicator */}
-        <div className="flex items-center justify-center py-1 text-[10px] text-muted-foreground/50">
-          <span>← Swipe left for Social</span>
+        <div className="flex items-center justify-center py-0.5 text-[9px] text-muted-foreground/40 select-none md:hidden">
+          <span>← Swipe for Social</span>
         </div>
 
         <ScrollArea className="flex-1 chat-scroll" ref={scrollRef}>
