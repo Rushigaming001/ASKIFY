@@ -281,13 +281,20 @@ export function WebRTCCall({
       }
 
       setIsConnecting(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error initializing call:', error);
+      const isPermissionDenied = error?.name === 'NotAllowedError';
+      const isNotFound = error?.name === 'NotFoundError';
       toast({
-        title: 'Error',
-        description: 'Failed to access camera/microphone. Please check permissions.',
+        title: isPermissionDenied ? 'Permission Denied' : isNotFound ? 'Device Not Found' : 'Error',
+        description: isPermissionDenied
+          ? 'Please allow camera/microphone access in your browser settings and try again.'
+          : isNotFound
+          ? 'No camera or microphone found on this device.'
+          : 'Failed to start call. Please check your device permissions.',
         variant: 'destructive'
       });
+      onClose();
     }
   };
 
