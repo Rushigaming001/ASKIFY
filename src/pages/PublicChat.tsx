@@ -739,13 +739,13 @@ const PublicChat = () => {
             >
               <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
-            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-              <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Users className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Users className="h-4.5 w-4.5 text-primary" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-base sm:text-lg md:text-xl font-semibold truncate">Public Chat</h1>
-                <p className="text-xs sm:text-sm text-muted-foreground truncate">Chat with everyone</p>
+                <h1 className="text-sm sm:text-base font-bold truncate">Public Chat</h1>
+                <p className="text-[10px] sm:text-xs text-muted-foreground/60 truncate">{messages.length} messages</p>
               </div>
             </div>
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
