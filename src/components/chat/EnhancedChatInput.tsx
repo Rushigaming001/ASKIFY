@@ -336,7 +336,7 @@ export function EnhancedChatInput({
             disabled={disabled || isUploading}
             className="flex-1"
           />
-        />
+        )}
 
         {/* Emoji Picker */}
         <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
