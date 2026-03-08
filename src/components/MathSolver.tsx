@@ -411,11 +411,14 @@ Guidelines:
               Solution (Maharashtra Board Format)
             </div>
           </div>
-          <div className="flex gap-2 flex-wrap">
+          <div className="text-sm text-foreground whitespace-pre-wrap leading-relaxed overflow-x-auto">
+            {solution}
+          </div>
+          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border">
             <Button
               size="sm"
               variant="outline"
-              className="gap-1.5"
+              className="gap-1.5 w-full"
               onClick={() => {
                 navigator.clipboard.writeText(solution);
                 toast({ title: 'Copied!', description: 'Solution copied to clipboard' });
@@ -427,7 +430,7 @@ Guidelines:
             <Button
               size="sm"
               variant="outline"
-              className="gap-1.5"
+              className="gap-1.5 w-full"
               onClick={() => {
                 const blob = new Blob([solution], { type: 'text/plain' });
                 const url = URL.createObjectURL(blob);
@@ -440,12 +443,12 @@ Guidelines:
               }}
             >
               <Download className="h-3.5 w-3.5" />
-              Save as Text
+              Text
             </Button>
             <Button
               size="sm"
               variant="outline"
-              className="gap-1.5"
+              className="gap-1.5 w-full"
               onClick={() => {
                 const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Math Solution</title><style>body{font-family:serif;max-width:800px;margin:40px auto;padding:20px;line-height:1.8;white-space:pre-wrap;}</style></head><body>${solution.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</body></html>`;
                 const blob = new Blob([html], { type: 'text/html' });
@@ -459,11 +462,8 @@ Guidelines:
               }}
             >
               <FileText className="h-3.5 w-3.5" />
-              Save as PDF
+              PDF
             </Button>
-          </div>
-          <div className="text-sm text-foreground whitespace-pre-wrap leading-relaxed overflow-x-auto">
-            {solution}
           </div>
         </div>
       )}
