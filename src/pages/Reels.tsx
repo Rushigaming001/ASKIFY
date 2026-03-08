@@ -422,9 +422,23 @@ const Reels = () => {
                 {reel.caption && (
                   <p className="text-white text-sm drop-shadow-lg line-clamp-2">{reel.caption}</p>
                 )}
-                <div className="flex items-center gap-2 mt-1">
-                  <Eye className="h-3.5 w-3.5 text-white/60" />
-                  <span className="text-white/60 text-xs">{reel.view_count} views</span>
+                <div className="flex items-center gap-3 mt-1">
+                  <div className="flex items-center gap-1">
+                    <Eye className="h-3.5 w-3.5 text-white/60" />
+                    <span className="text-white/60 text-xs">{reel.view_count} views</span>
+                  </div>
+                  {reel.user_id === user?.id && reel.view_count >= 100 && (
+                    <div className="flex items-center gap-1 bg-amber-500/30 rounded-full px-2 py-0.5">
+                      <span className="text-amber-300 text-xs font-medium">
+                        💰 {Math.floor(reel.view_count / 100) * 5} coins earned
+                      </span>
+                    </div>
+                  )}
+                  {reel.user_id === user?.id && reel.view_count < 100 && (
+                    <span className="text-white/40 text-xs">
+                      {100 - reel.view_count} views to earn 5 coins
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
