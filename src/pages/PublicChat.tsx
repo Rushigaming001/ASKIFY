@@ -101,8 +101,16 @@ const PublicChat = () => {
   const [coinRecipient, setCoinRecipient] = useState<{ id: string; name: string } | null>(null);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showSocialPanel, setShowSocialPanel] = useState(false);
+  const [mentionNotifications, setMentionNotifications] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const pingAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Initialize ping sound
+  useEffect(() => {
+    pingAudioRef.current = new Audio('/sounds/mention-ping.mp3');
+    pingAudioRef.current.volume = 0.5;
+  }, []);
   
   // Typing indicator
   const { sendTyping } = useTypingIndicator('public-chat', user?.id, user?.name);
@@ -184,11 +192,37 @@ const PublicChat = () => {
               .sort((a, b) => (ROLE_PRI[a.role] ?? 99) - (ROLE_PRI[b.role] ?? 99))[0];
 
             if (profile) {
-              setMessages(prev => [...prev, {
+              const newMsg = {
                 ...payload.new as any,
                 profiles: profile,
                 user_role: bestRole?.role || 'user'
-              }]);
+              };
+              setMessages(prev => [...prev, newMsg]);
+
+              // Check if current user is mentioned
+              const content = (payload.new as any).content || '';
+              const senderUserId = (payload.new as any).user_id;
+              if (user && senderUserId !== user.id) {
+                const userName = user.name || '';
+                const mentionVariants = [
+                  `@${userName.toLowerCase().replace(/\s+/g, '')}`,
+                  `@${userName.toLowerCase().split(' ')[0]}`,
+                  '@everyone'
+                ];
+                const contentLower = content.toLowerCase();
+                const isMentioned = mentionVariants.some(v => contentLower.includes(v));
+                if (isMentioned) {
+                  // Play ping sound
+                  pingAudioRef.current?.play().catch(() => {});
+                  // Add to mention notifications
+                  setMentionNotifications(prev => [...prev, (payload.new as any).id]);
+                  // Show toast
+                  toast({
+                    title: `${profile.name} mentioned you`,
+                    description: content.length > 80 ? content.substring(0, 80) + '...' : content,
+                  });
+                }
+              }
             }
           } else if (payload.eventType === 'UPDATE') {
             setMessages(prev => prev.map(msg => 
@@ -749,6 +783,29 @@ const PublicChat = () => {
               </div>
             </div>
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              {/* Mention notification badge */}
+              {mentionNotifications.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 sm:h-8 sm:w-8 relative"
+                  title="Jump to mention"
+                  onClick={() => {
+                    const lastMention = mentionNotifications[mentionNotifications.length - 1];
+                    const el = document.getElementById(`msg-${lastMention}`);
+                    if (el) {
+                      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      el.classList.add('animate-pulse');
+                      setTimeout(() => el.classList.remove('animate-pulse'), 2000);
+                    }
+                  }}
+                >
+                  <span className="text-lg">@</span>
+                  <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-destructive text-[9px] text-destructive-foreground flex items-center justify-center font-bold">
+                    {mentionNotifications.length}
+                  </span>
+                </Button>
+              )}
               <CoinBalance compact onClick={() => setShowLeaderboard(true)} />
               <Button
                 variant="ghost"
@@ -865,15 +922,35 @@ const PublicChat = () => {
                   message.image_url.includes('giphy.com')
                 );
 
+                // Check if this message mentions the current user
+                const isMentioningMe = (() => {
+                  if (!user || isOwnMessage) return false;
+                  const content = message.content.toLowerCase();
+                  const userName = (user.name || '').toLowerCase();
+                  return content.includes(`@${userName.replace(/\s+/g, '')}`) ||
+                         content.includes(`@${userName.split(' ')[0]}`) ||
+                         content.includes('@everyone');
+                })();
+                const hasMentionNotif = mentionNotifications.includes(message.id);
+
                 return (
-                  <div key={message.id}>
+                  <div key={message.id} id={`msg-${message.id}`}>
                     {showDateSep && (
                       <DateSeparator date={message.created_at} />
                     )}
                     <div
-                      className={`flex gap-3 group px-2 py-0.5 rounded-lg hover:bg-muted/30 transition-colors ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'} ${isDeleted ? 'opacity-50' : ''} ${isGrouped ? 'mt-0' : 'mt-4'}`}
+                      className={`flex gap-3 group px-2 py-0.5 rounded-lg transition-colors ${
+                        isMentioningMe || hasMentionNotif
+                          ? 'bg-amber-500/10 border-l-2 border-amber-500/50 hover:bg-amber-500/15'
+                          : 'hover:bg-muted/30'
+                      } ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'} ${isDeleted ? 'opacity-50' : ''} ${isGrouped ? 'mt-0' : 'mt-4'}`}
+                      onClick={() => {
+                        // Clear mention notification when message is visible
+                        if (hasMentionNotif) {
+                          setMentionNotifications(prev => prev.filter(id => id !== message.id));
+                        }
+                      }}
                     >
-                      {/* Avatar - only show for first in group */}
                       {!isGrouped ? (
                         <Avatar 
                           className="h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0 cursor-pointer ring-2 ring-transparent hover:ring-primary/50 transition-all shadow-sm"
@@ -1031,11 +1108,12 @@ const PublicChat = () => {
           <EnhancedChatInput
             onSend={(content, fileUrl) => handleSendMediaMessage(content, fileUrl)}
             onTyping={sendTyping}
-            placeholder={replyingTo ? `Reply to ${replyingTo.profiles?.name}...` : "Type a message..."}
+            placeholder={replyingTo ? `Reply to ${replyingTo.profiles?.name}...` : "Type a message... (@ to mention)"}
             disabled={isLoading}
             userId={user?.id}
             chatType="public"
             maxFileSize={200}
+            mentionProfiles={allProfiles}
           />
         </div>
 

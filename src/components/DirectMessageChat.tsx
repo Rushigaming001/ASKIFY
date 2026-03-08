@@ -5,13 +5,12 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { X, Video, Phone, PhoneIncoming, PhoneMissed, PhoneOff, Camera, CircleDot, MoreVertical, Edit2, Trash2, Reply, Copy, Coins } from 'lucide-react';
+import { X, Video, Phone, PhoneIncoming, PhoneMissed, PhoneOff, Camera, MoreVertical, Edit2, Trash2, Reply, Copy, Coins } from 'lucide-react';
 import { WebRTCCall } from './WebRTCCall';
 import { useToast } from '@/hooks/use-toast';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { EnhancedChatInput, TypingIndicator, useTypingIndicator, DateSeparator, isDifferentDay } from './chat';
 import { SnapSender } from './SnapSender';
-import { StoriesViewer } from './StoriesViewer';
 import { MessageReactions } from './MessageReactions';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
@@ -60,7 +59,6 @@ export function DirectMessageChat({ recipientId, recipientName, onClose }: Direc
   const [showVideoCall, setShowVideoCall] = useState(false);
   const [showVoiceCall, setShowVoiceCall] = useState(false);
   const [showSnapSender, setShowSnapSender] = useState(false);
-  const [showStatusBar, setShowStatusBar] = useState(false);
   const [replyingTo, setReplyingTo] = useState<DirectMessage | null>(null);
   const [editingMessage, setEditingMessage] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
@@ -362,9 +360,6 @@ export function DirectMessageChat({ recipientId, recipientName, onClose }: Direc
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <Button size="sm" variant="ghost" onClick={() => setShowStatusBar(!showStatusBar)} title="Status" className="h-8 w-8 p-0">
-            <CircleDot className="h-4 w-4" />
-          </Button>
           <Button size="sm" variant="ghost" onClick={() => setShowSnapSender(true)} title="Send Snap" className="h-8 w-8 p-0 text-yellow-600 dark:text-yellow-400">
             <Camera className="h-4 w-4" />
           </Button>
@@ -379,12 +374,6 @@ export function DirectMessageChat({ recipientId, recipientName, onClose }: Direc
           </Button>
         </div>
       </div>
-
-      {showStatusBar && (
-        <div className="border-b border-border">
-          <StoriesViewer />
-        </div>
-      )}
 
       <ScrollArea className="flex-1" ref={scrollRef}>
         <div className="p-4 space-y-1">
