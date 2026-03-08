@@ -287,7 +287,7 @@ export function WebRTCCall({
       }
 
       setIsConnecting(false);
-    } catch (error: any) {
+      setCallReady(true);
       console.error('Error initializing call:', error);
       const isPermissionDenied = error?.name === 'NotAllowedError';
       const isNotFound = error?.name === 'NotFoundError';
