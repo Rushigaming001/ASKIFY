@@ -134,16 +134,28 @@ const Reels = () => {
         });
         // If insert succeeded (not duplicate), give coins
         if (!earningError) {
-          await supabase.rpc('admin_give_coins', {
-            _admin_user_id: reel.user_id,
-            _to_user_id: reel.user_id,
-            _amount: 5,
-            _set_unlimited: false
-          }).catch(() => {
-            // Fallback: direct insert
-            supabase.from('user_coins')
-              .upsert({ user_id: reel.user_id, balance: 5 }, { onConflict: 'user_id' })
-              .then(() => {});
+          // Give coins via direct update
+          const { data: existing } = await supabase
+            .from('user_coins')
+            .select('balance')
+            .eq('user_id', reel.user_id)
+            .maybeSingle();
+          
+          if (existing) {
+            await supabase.from('user_coins')
+              .update({ balance: existing.balance + 5, updated_at: new Date().toISOString() })
+              .eq('user_id', reel.user_id);
+          } else {
+            await supabase.from('user_coins')
+              .insert({ user_id: reel.user_id, balance: 5 });
+          }
+          
+          // Log transaction
+          await supabase.from('coin_transactions').insert({
+            to_user_id: reel.user_id,
+            amount: 5,
+            transaction_type: 'reel_earnings',
+            description: `Reel reached ${milestone} views`
           });
         }
       }
