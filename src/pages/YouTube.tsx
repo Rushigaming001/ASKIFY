@@ -485,7 +485,6 @@ const YouTube = () => {
         
         <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
       </div>
-      </div>
     );
   }
 
