@@ -909,7 +909,25 @@ const PublicChat = () => {
                          content.includes('@everyone');
                 })();
                 const hasMentionNotif = mentionNotifications.includes(message.id);
-                      {/* Avatar - only show for first in group */}
+
+                return (
+                  <div key={message.id} id={`msg-${message.id}`}>
+                    {showDateSep && (
+                      <DateSeparator date={message.created_at} />
+                    )}
+                    <div
+                      className={`flex gap-3 group px-2 py-0.5 rounded-lg transition-colors ${
+                        isMentioningMe || hasMentionNotif
+                          ? 'bg-amber-500/10 border-l-2 border-amber-500/50 hover:bg-amber-500/15'
+                          : 'hover:bg-muted/30'
+                      } ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'} ${isDeleted ? 'opacity-50' : ''} ${isGrouped ? 'mt-0' : 'mt-4'}`}
+                      onClick={() => {
+                        // Clear mention notification when message is visible
+                        if (hasMentionNotif) {
+                          setMentionNotifications(prev => prev.filter(id => id !== message.id));
+                        }
+                      }}
+                    >
                       {!isGrouped ? (
                         <Avatar 
                           className="h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0 cursor-pointer ring-2 ring-transparent hover:ring-primary/50 transition-all shadow-sm"
