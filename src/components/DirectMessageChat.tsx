@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { X, Video, Phone, PhoneIncoming, PhoneMissed, PhoneOff, Camera, CircleDot, MoreVertical, Edit2, Trash2, Reply, Copy, Coins } from 'lucide-react';
+import { X, Video, Phone, PhoneIncoming, PhoneMissed, PhoneOff, Camera, MoreVertical, Edit2, Trash2, Reply, Copy, Coins } from 'lucide-react';
 import { WebRTCCall } from './WebRTCCall';
 import { useToast } from '@/hooks/use-toast';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
