@@ -21,6 +21,7 @@ interface EnhancedChatInputProps {
   chatType?: 'public' | 'friends' | 'dm' | 'group';
   chatId?: string;
   maxFileSize?: number; // in MB, default 200MB
+  profiles?: { id: string; name: string }[];
 }
 
 // Popular GIF categories
