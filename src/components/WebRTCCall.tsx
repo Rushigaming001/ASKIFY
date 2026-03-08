@@ -909,6 +909,8 @@ export function WebRTCCall({
             </Button>
           </div>
         </div>
+        </>
+        )}
       </DialogContent>
     </Dialog>
   );
