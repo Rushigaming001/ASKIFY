@@ -93,6 +93,10 @@ const YouTube = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showSearch, setShowSearch] = useState(false);
   const [showSearchHistory, setShowSearchHistory] = useState(false);
+  const [ytDarkMode, setYtDarkMode] = useState(() => {
+    const saved = localStorage.getItem('yt-dark-mode');
+    return saved ? saved === 'true' : true; // YouTube defaults to dark
+  });
   
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
