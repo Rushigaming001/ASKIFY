@@ -125,6 +125,12 @@ const YouTube = () => {
   const lastVideoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    localStorage.setItem('yt-dark-mode', String(ytDarkMode));
+  }, [ytDarkMode]);
+
+  const toggleYtDarkMode = () => setYtDarkMode(prev => !prev);
+
+  useEffect(() => {
     fetchTrendingVideos();
     fetchShorts();
   }, []);
