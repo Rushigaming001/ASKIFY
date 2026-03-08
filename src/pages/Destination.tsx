@@ -49,11 +49,8 @@ const Destination = () => {
         {/* Header */}
         <header className="text-center mb-10 sm:mb-14">
           <div className="inline-flex items-center justify-center mb-5">
-            <div className="relative">
-              <div className="absolute -inset-2 bg-primary/10 rounded-2xl blur-xl" />
-              <div className="relative p-3 rounded-2xl bg-card border border-border/50 shadow-lg">
-                <img src={askifyLogoNew} alt="Askify" className="h-12 w-12 sm:h-14 sm:w-14 object-contain" />
-              </div>
+            <div className="relative p-3 rounded-2xl bg-card border border-border/50 shadow-lg">
+              <img src={askifyLogoNew} alt="Askify" className="h-12 w-12 sm:h-14 sm:w-14 object-contain" />
             </div>
           </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-foreground mb-2">
