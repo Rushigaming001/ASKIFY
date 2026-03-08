@@ -136,24 +136,19 @@ export default function AdminPanel() {
     try {
       const userId = activeSession.user.id;
 
-      const { data: allowed, error } = await supabase.rpc('is_owner_or_admin', {
+      const { data: allowed, error } = await supabase.rpc('is_owner', {
         _user_id: userId,
       });
 
       if (error) throw error;
 
       if (!allowed) {
-        toast.error(`Access denied for ${activeSession.user.email || 'your account'}. Admin or Owner privileges required.`);
+        toast.error(`Access denied for ${activeSession.user.email || 'your account'}. Owner privileges required.`);
         navigate('/');
         return;
       }
 
-      // Check if user is owner (for paid role assignment)
-      const { data: ownerCheck } = await supabase.rpc('is_owner', {
-        _user_id: userId,
-      });
-      setIsOwner(!!ownerCheck);
-
+      setIsOwner(true);
       setIsAdmin(true);
       loadUsers();
     } catch (error: any) {

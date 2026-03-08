@@ -91,19 +91,19 @@ export function Sidebar({ isOpen, onToggle, alwaysOpen = false, collapsed = fals
   const checkAdminStatus = async () => {
     const userId = user?.id;
     if (!userId) {
-      setIsAdmin(false);
+      setIsOwner(false);
       return;
     }
 
     try {
-      const { data, error } = await supabase.rpc('is_owner_or_admin', {
+      const { data, error } = await supabase.rpc('is_owner', {
         _user_id: userId,
       });
 
       if (error) throw error;
-      setIsAdmin(!!data);
+      setIsOwner(!!data);
     } catch {
-      setIsAdmin(false);
+      setIsOwner(false);
     }
   };
 
