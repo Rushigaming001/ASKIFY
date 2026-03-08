@@ -193,11 +193,14 @@ export function WebRTCCall({
       }
     };
 
-    // Connection state
+    // Connection state + bandwidth monitoring
     pc.onconnectionstatechange = () => {
       console.log(`Connection to ${targetUserId}:`, pc.connectionState);
       if (pc.connectionState === 'connected') {
         setIsConnecting(false);
+        // Start adaptive bandwidth monitoring
+        const monitorId = startBandwidthMonitor(pc);
+        bandwidthMonitorsRef.current.push(monitorId);
       }
     };
 
