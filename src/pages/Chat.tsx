@@ -555,13 +555,15 @@ const Chat = () => {
 
         {/* Bottom ChatInput - never disabled so user can type while AI responds */}
         {!showWelcome && (
-          <div className="chat-input-appear">
-            <ChatInput
-              onSendMessage={handleSendMessage}
-              onModeChange={handleModeChange}
-              mode={currentChat?.mode || 'normal'}
-              disabled={false}
-            />
+          <div className="chat-input-appear w-full flex justify-center">
+            <div className="w-full max-w-3xl px-4">
+              <ChatInput
+                onSendMessage={handleSendMessage}
+                onModeChange={handleModeChange}
+                mode={currentChat?.mode || 'normal'}
+                disabled={false}
+              />
+            </div>
           </div>
         )}
       </div>
