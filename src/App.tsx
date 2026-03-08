@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ChatProvider } from "./contexts/ChatContext";
+import { ProtectedAdminRoute } from "@/components/ProtectedRoute";
 import { Loader2 } from "lucide-react";
 
 // Lazy-load all pages for faster initial load
@@ -81,7 +82,7 @@ const App = () => {
                     <Route path="/settings" element={<Settings />} />
                     <Route path="/public-chat" element={<PublicChat />} />
                     <Route path="/friends-chat" element={<FriendsChat />} />
-                    <Route path="/admin" element={<AdminPanel />} />
+                    <Route path="/admin" element={<ProtectedAdminRoute><AdminPanel /></ProtectedAdminRoute>} />
                     <Route path="/game" element={<Game />} />
                     <Route path="/games" element={<Games />} />
                     <Route path="/chess" element={<Chess />} />
