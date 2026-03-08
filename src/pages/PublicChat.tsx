@@ -1035,6 +1035,7 @@ const PublicChat = () => {
             userId={user?.id}
             chatType="public"
             maxFileSize={200}
+            profiles={allProfiles}
           />
         </div>
 
