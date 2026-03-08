@@ -95,8 +95,35 @@ const YouTube = () => {
   const [showSearchHistory, setShowSearchHistory] = useState(false);
   const [ytDarkMode, setYtDarkMode] = useState(() => {
     const saved = localStorage.getItem('yt-dark-mode');
-    return saved ? saved === 'true' : true; // YouTube defaults to dark
+    return saved ? saved === 'true' : true;
   });
+
+  // Apply dark mode to document root for YouTube page
+  useEffect(() => {
+    const root = document.documentElement;
+    const prevHadDark = root.classList.contains('dark');
+    
+    if (ytDarkMode) {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    
+    // Restore previous theme on unmount
+    return () => {
+      const storedTheme = localStorage.getItem('theme') || 'system';
+      root.classList.remove('dark', 'light');
+      if (storedTheme === 'dark') {
+        root.classList.add('dark');
+      } else if (storedTheme === 'light') {
+        root.classList.add('light');
+      } else {
+        // system
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        root.classList.add(systemDark ? 'dark' : 'light');
+      }
+    };
+  }, [ytDarkMode]);
   
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
