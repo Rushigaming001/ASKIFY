@@ -30,7 +30,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onToggle, alwaysOpen = false, collapsed = false, onCollapse }: SidebarProps) {
-  const { chats, currentChat, createNewChat, selectChat, deleteChat, renameChat, togglePinChat } = useChat();
+  const { chats, currentChat, createNewChat, selectChat, deleteChat, deleteAllChats, renameChat, togglePinChat } = useChat();
   const { user, logout } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -848,10 +848,26 @@ export function Sidebar({ isOpen, onToggle, alwaysOpen = false, collapsed = fals
           </Button>
         </div>
         
-        <div className="px-4 py-2">
+        <div className="px-4 py-2 flex items-center justify-between">
           <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Chat History
           </div>
+          {chats.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 text-[10px] text-destructive hover:text-destructive px-2"
+              onClick={async () => {
+                if (confirm('Delete all chats? This cannot be undone.')) {
+                  await deleteAllChats();
+                  toast({ title: 'All chats cleared' });
+                }
+              }}
+            >
+              <Trash2 className="h-3 w-3 mr-1" />
+              Clear All
+            </Button>
+          )}
         </div>
 
         <ScrollArea className="flex-1 px-2">

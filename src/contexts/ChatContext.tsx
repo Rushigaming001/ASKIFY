@@ -27,6 +27,7 @@ interface ChatContextType {
   createNewChat: () => Promise<void>;
   selectChat: (chatId: string) => Promise<void>;
   deleteChat: (chatId: string) => Promise<void>;
+  deleteAllChats: () => Promise<void>;
   renameChat: (chatId: string, newTitle: string) => Promise<void>;
   togglePinChat: (chatId: string) => Promise<void>;
   addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => Promise<void>;
@@ -178,6 +179,21 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Error deleting chat:', error);
+    }
+  };
+
+  const deleteAllChats = async () => {
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from('ai_chats')
+        .delete()
+        .eq('user_id', user.id);
+      if (error) throw error;
+      setChats([]);
+      setCurrentChat(null);
+    } catch (error) {
+      console.error('Error deleting all chats:', error);
     }
   };
 
@@ -339,6 +355,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       createNewChat,
       selectChat,
       deleteChat,
+      deleteAllChats,
       renameChat,
       togglePinChat,
       addMessage,
