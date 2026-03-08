@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { MessageSquare, Sparkles, Globe, BookOpen, Video, BarChart3, Gamepad2, Settings, Users, Activity, Wind, Clapperboard, Brain } from 'lucide-react';
+import { MessageSquare, Sparkles, Globe, BookOpen, Video, BarChart3, Gamepad2, Settings, Users, Activity, Wind, Clapperboard, Brain, Download } from 'lucide-react';
 import askifyLogoNew from '@/assets/askify-logo-new.png';
 
 const destinations = [
@@ -18,6 +18,7 @@ const destinations = [
   { title: 'Games', description: 'Skribbl, Chess & more', icon: Gamepad2, path: '/games', gradient: 'from-violet-500 to-fuchsia-500' },
   { title: 'AQI', description: 'Air quality index', icon: Wind, path: '/aqi', gradient: 'from-emerald-500 to-green-600' },
   { title: 'Reels', description: 'Watch & share reels', icon: Clapperboard, path: '/reels', gradient: 'from-pink-500 to-rose-600' },
+  { title: 'Install App', description: 'Get Askify on your device', icon: Download, path: '/install', gradient: 'from-indigo-500 to-blue-600' },
   { title: 'Status', description: 'System uptime', icon: Activity, path: '/status', gradient: 'from-green-500 to-teal-500' },
 ];
 
