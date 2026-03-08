@@ -16,7 +16,7 @@ import { canAccessModel } from '@/services/modelPermissionService';
 import { useToast } from '@/hooks/use-toast';
 import { useDailyMessageLimit } from '@/hooks/useDailyMessageLimit';
 import { useUserRestrictions } from '@/hooks/useUserRestrictions';
-import { Loader2, Lock, AlertCircle, MessageCircle, Sparkles, Pencil, Gamepad2, Wind, BarChart3, Play, BookOpen, Menu, X, Calculator, Video, Film, Box, Clapperboard, MoreHorizontal } from 'lucide-react';
+import { Loader2, Lock, AlertCircle, MessageCircle, Sparkles, Pencil, Gamepad2, Wind, BarChart3, Play, BookOpen, Menu, X, Calculator, Video, Film, Box, Clapperboard, MoreHorizontal, WifiOff } from 'lucide-react';
 import { AskifyLogo } from '@/components/AskifyLogo';
 import { MathSolver } from '@/components/MathSolver';
 import { LiveVideoCall } from '@/components/LiveVideoCall';
