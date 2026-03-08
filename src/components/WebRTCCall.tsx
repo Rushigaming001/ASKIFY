@@ -244,28 +244,9 @@ export function WebRTCCall({
 
   const initializeCall = async () => {
     try {
-      // First check if permissions are available
-      let hasPermission = true;
-      try {
-        if (navigator.permissions) {
-          const micPerm = await navigator.permissions.query({ name: 'microphone' as PermissionName });
-          if (micPerm.state === 'denied') hasPermission = false;
-          if (callType === 'video') {
-            const camPerm = await navigator.permissions.query({ name: 'camera' as PermissionName });
-            if (camPerm.state === 'denied') hasPermission = false;
-          }
-        }
-      } catch {}
-
-      if (!hasPermission) {
-        toast({
-          title: 'Permissions Required',
-          description: 'Camera/microphone access was denied. Please enable it in your browser or device settings, then try again.',
-          variant: 'destructive'
-        });
-        onClose();
-        return;
-      }
+      // Skip pre-checking permissions — on mobile browsers, the query API often
+      // reports "denied" even when the user hasn't been prompted via a gesture yet.
+      // Instead, go straight to getUserMedia which triggers the real browser prompt.
 
       // Try with full constraints first, fallback to audio-only if video fails
       let stream: MediaStream;
