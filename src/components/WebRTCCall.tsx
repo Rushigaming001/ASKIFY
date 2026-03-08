@@ -151,9 +151,19 @@ export function WebRTCCall({
   const initializeCall = async () => {
     try {
       // Get user media
-      const constraints = {
-        video: callType === 'video',
-        audio: true
+      const constraints: MediaStreamConstraints = {
+        video: callType === 'video' ? {
+          width: { ideal: 1280, max: 1920 },
+          height: { ideal: 720, max: 1080 },
+          facingMode: 'user',
+          frameRate: { ideal: 30, max: 60 }
+        } : false,
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          sampleRate: 48000
+        }
       };
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);

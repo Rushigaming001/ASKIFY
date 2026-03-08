@@ -73,6 +73,7 @@ const App = () => {
               <AuthProvider>
                 <ChatProvider>
                   <PushNotificationPrompt />
+                  <PermissionsPrompt />
                   <Toaster />
                   <Sonner />
                   <Routes>
