@@ -669,7 +669,82 @@ export function WebRTCCall({
     }
   };
 
+  // ── Call Recording (Owner Only) ──
+  const startRecording = () => {
+    if (!localStreamRef.current) return;
+    try {
+      const streams: MediaStream[] = [localStreamRef.current];
+      remoteStreams.forEach(s => streams.push(s));
+      
+      // Create a combined stream using AudioContext
+      const audioCtx = new AudioContext();
+      const dest = audioCtx.createMediaStreamDestination();
+      streams.forEach(s => {
+        s.getAudioTracks().forEach(t => {
+          const source = audioCtx.createMediaStreamSource(new MediaStream([t]));
+          source.connect(dest);
+        });
+      });
+      
+      const combinedStream = new MediaStream([
+        ...localStreamRef.current.getVideoTracks(),
+        ...dest.stream.getAudioTracks()
+      ]);
+      
+      const recorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm;codecs=vp9,opus' });
+      recordedChunksRef.current = [];
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunksRef.current.push(e.data); };
+      recorder.onstop = () => {
+        const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `call-recording-${new Date().toISOString().slice(0,19)}.webm`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast({ title: 'Recording saved', description: 'Call recording has been downloaded.' });
+      };
+      recorder.start(1000);
+      mediaRecorderRef.current = recorder;
+      setIsRecording(true);
+      toast({ title: 'Recording started' });
+    } catch {
+      toast({ title: 'Error', description: 'Failed to start recording', variant: 'destructive' });
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current = null;
+      setIsRecording(false);
+    }
+  };
+
+  // ── In-Call Chat ──
+  const sendCallChatMessage = () => {
+    if (!callChatInput.trim() || !channelRef.current || !user) return;
+    const msg = {
+      id: Date.now().toString(),
+      name: user.name || 'You',
+      text: callChatInput.trim(),
+      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    };
+    channelRef.current.send({
+      type: 'broadcast',
+      event: 'call-chat',
+      payload: msg
+    });
+    setCallChatMessages(prev => [...prev, msg]);
+    setCallChatInput('');
+  };
+
   const cleanup = () => {
+    // Stop recording if active
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+
     // Stop bandwidth monitors
     bandwidthMonitorsRef.current.forEach(id => clearInterval(id));
     bandwidthMonitorsRef.current = [];
@@ -697,6 +772,8 @@ export function WebRTCCall({
     screenStreamRef.current = null;
     audioContextRef.current = null;
     setRemoteStreams(new Map());
+    setIsRecording(false);
+    setCallChatMessages([]);
   };
 
   const handleEndCall = () => {
