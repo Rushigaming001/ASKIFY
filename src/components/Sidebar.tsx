@@ -1156,7 +1156,17 @@ export function Sidebar({ isOpen, onToggle, alwaysOpen = false, collapsed = fals
             <Download className="h-4 w-4 mr-2" />
             Download Mobile App
           </Button>
-          
+
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start hover:bg-accent transition-all duration-200 hover:scale-[1.02]" 
+            size="sm"
+            onClick={() => navigate('/offline-ai')}
+          >
+            <Brain className="h-4 w-4 mr-2" />
+            Offline AI
+          </Button>
+
           <Button 
             variant="ghost" 
             className="w-full justify-start hover:bg-accent transition-all duration-200 hover:scale-[1.02]" 
