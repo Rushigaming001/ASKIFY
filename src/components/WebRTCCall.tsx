@@ -64,11 +64,30 @@ export function WebRTCCall({
   }, [isOpen]);
 
   const createPeerConnection = (targetUserId: string): RTCPeerConnection => {
-    const configuration = {
+    const configuration: RTCConfiguration = {
       iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' }
-      ]
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun3.l.google.com:19302' },
+        { urls: 'stun:stun4.l.google.com:19302' },
+        {
+          urls: 'turn:openrelay.metered.ca:80',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        },
+        {
+          urls: 'turn:openrelay.metered.ca:443',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        },
+        {
+          urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        }
+      ],
+      iceCandidatePoolSize: 10
     };
 
     const pc = new RTCPeerConnection(configuration);
@@ -132,9 +151,19 @@ export function WebRTCCall({
   const initializeCall = async () => {
     try {
       // Get user media
-      const constraints = {
-        video: callType === 'video',
-        audio: true
+      const constraints: MediaStreamConstraints = {
+        video: callType === 'video' ? {
+          width: { ideal: 1280, max: 1920 },
+          height: { ideal: 720, max: 1080 },
+          facingMode: 'user',
+          frameRate: { ideal: 30, max: 60 }
+        } : false,
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          sampleRate: 48000
+        }
       };
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
