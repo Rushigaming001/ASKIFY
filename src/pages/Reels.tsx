@@ -298,7 +298,8 @@ const Reels = () => {
   }
 
   return (
-    <div className="h-[100dvh] bg-black flex flex-col overflow-hidden">
+    <div className="h-[100dvh] bg-black flex items-center justify-center overflow-hidden">
+    <div className="h-full w-full max-w-[480px] relative flex flex-col overflow-hidden">
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between p-3 bg-gradient-to-b from-black/60 to-transparent">
         <div className="flex items-center gap-3">
@@ -507,6 +508,7 @@ const Reels = () => {
           </div>
         </SheetContent>
       </Sheet>
+    </div>
     </div>
   );
 };
