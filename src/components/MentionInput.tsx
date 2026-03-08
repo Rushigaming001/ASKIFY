@@ -110,22 +110,33 @@ export function MentionInput({
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (!showSuggestions) return;
-
-    if (e.key === 'ArrowDown') {
+    if (showSuggestions && suggestions.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedIndex(prev => (prev + 1) % suggestions.length);
+        return;
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedIndex(prev => (prev - 1 + suggestions.length) % suggestions.length);
+        return;
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        insertMention(suggestions[selectedIndex]);
+        return;
+      } else if (e.key === 'Escape') {
+        setShowSuggestions(false);
+        return;
+      } else if (e.key === 'Tab') {
+        e.preventDefault();
+        insertMention(suggestions[selectedIndex]);
+        return;
+      }
+    }
+    
+    // Submit on Enter when no suggestions shown
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      setSelectedIndex(prev => (prev + 1) % suggestions.length);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedIndex(prev => (prev - 1 + suggestions.length) % suggestions.length);
-    } else if (e.key === 'Enter' && suggestions.length > 0) {
-      e.preventDefault();
-      insertMention(suggestions[selectedIndex]);
-    } else if (e.key === 'Escape') {
-      setShowSuggestions(false);
-    } else if (e.key === 'Tab' && suggestions.length > 0) {
-      e.preventDefault();
-      insertMention(suggestions[selectedIndex]);
+      onSubmit(e as any);
     }
   };
 
