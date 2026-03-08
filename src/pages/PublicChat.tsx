@@ -865,7 +865,7 @@ const PublicChat = () => {
                       {/* Avatar - only show for first in group */}
                       {!isGrouped ? (
                         <Avatar 
-                          className="h-8 w-8 flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+                          className="h-9 w-9 flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-primary transition-all"
                           onClick={() => setViewingProfile({ userId: message.user_id, userName: message.profiles?.name || 'User' })}
                         >
                           {message.profiles?.avatar_url ? (
@@ -876,7 +876,7 @@ const PublicChat = () => {
                           </AvatarFallback>
                         </Avatar>
                       ) : (
-                        <div className="w-8 flex-shrink-0" />
+                        <div className="w-9 flex-shrink-0" />
                       )}
                       <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'} max-w-[75%]`}>
                         {!isGrouped && (
