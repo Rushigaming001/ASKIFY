@@ -24,9 +24,9 @@ export default defineConfig(({ mode }) => ({
         background_color: '#0f172a',
         display: 'standalone',
         orientation: 'portrait',
-        start_url: '/',
-        id: '/',
-        scope: '/',
+        start_url: 'https://minequest.fun/',
+        id: 'https://minequest.fun/',
+        scope: 'https://minequest.fun/',
         categories: ['productivity', 'utilities', 'education'],
         icons: [
           {

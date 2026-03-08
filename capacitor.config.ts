@@ -1,12 +1,31 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.21aca49ee570476c8bd5a93c0f45d730',
+  appId: 'fun.minequest.askify',
   appName: 'Askify',
   webDir: 'dist',
   server: {
-    url: 'https://21aca49e-e570-476c-8bd5-a93c0f45d730.lovableproject.com?forceHideBadge=true',
+    url: 'https://minequest.fun',
     cleartext: true
+  },
+  android: {
+    allowMixedContent: true,
+    captureInput: true,
+    webContentsDebuggingEnabled: false
+  },
+  ios: {
+    contentInset: 'automatic',
+    allowsLinkPreview: true
+  },
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 2000,
+      backgroundColor: '#0f172a',
+      showSpinner: false,
+      androidSplashResourceName: 'splash',
+      splashFullScreen: true,
+      splashImmersive: true
+    }
   }
 };
 
