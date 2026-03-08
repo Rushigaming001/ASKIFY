@@ -16,7 +16,7 @@ import { canAccessModel } from '@/services/modelPermissionService';
 import { useToast } from '@/hooks/use-toast';
 import { useDailyMessageLimit } from '@/hooks/useDailyMessageLimit';
 import { useUserRestrictions } from '@/hooks/useUserRestrictions';
-import { Loader2, Lock, AlertCircle, MessageCircle, Sparkles, Pencil, Gamepad2, Wind, BarChart3, Play, BookOpen, Menu, X, Calculator, Video, Film, Box, Clapperboard, MoreHorizontal } from 'lucide-react';
+import { Loader2, Lock, AlertCircle, MessageCircle, Sparkles, Pencil, Gamepad2, Wind, BarChart3, Play, BookOpen, Menu, X, Calculator, Video, Film, Box, Clapperboard, MoreHorizontal, WifiOff } from 'lucide-react';
 import { AskifyLogo } from '@/components/AskifyLogo';
 import { MathSolver } from '@/components/MathSolver';
 import { LiveVideoCall } from '@/components/LiveVideoCall';
@@ -24,6 +24,7 @@ import { VideoGenerator } from '@/components/VideoGenerator';
 import MinecraftPluginMaker from '@/components/MinecraftPluginMaker';
 import CapCutPro from '@/components/CapCutPro';
 import { ExpensiveModelWarning, isExpensiveModel, getModelDisplayName } from '@/components/ExpensiveModelWarning';
+import { OfflineMathSolver } from '@/components/OfflineMathSolver';
 
 const Chat = () => {
   const { user, session, isLoading: authLoading } = useAuth();
@@ -605,7 +606,20 @@ const Chat = () => {
                   </DialogContent>
                 )}
               </Dialog>
-              
+
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="ghost" className="w-full justify-start gap-2 text-sm">
+                    <WifiOff className="h-4 w-4 text-emerald-500" />
+                    Offline Math
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+                  <DialogHeader><DialogTitle>Offline Math Solver</DialogTitle></DialogHeader>
+                  <OfflineMathSolver />
+                </DialogContent>
+              </Dialog>
+
               <Dialog>
                 <DialogTrigger asChild>
                   <Button variant="ghost" className="w-full justify-start gap-2 text-sm" disabled={restrictions.live_video_call_disabled}>
