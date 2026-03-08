@@ -46,9 +46,21 @@ export function ImageGenerator() {
 
   const downloadImage = async (imageUrl: string, filename: string) => {
     try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
+      let blobUrl: string;
+      if (imageUrl.startsWith('data:')) {
+        // Handle base64 data URLs directly
+        const [header, base64] = imageUrl.split(',');
+        const mime = header.match(/data:(.*?);/)?.[1] || 'image/png';
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        const blob = new Blob([bytes], { type: mime });
+        blobUrl = URL.createObjectURL(blob);
+      } else {
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        blobUrl = URL.createObjectURL(blob);
+      }
       const link = document.createElement('a');
       link.href = blobUrl;
       link.download = filename;
