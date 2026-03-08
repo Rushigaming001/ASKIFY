@@ -7,6 +7,7 @@ import { MessageSquare, Sparkles, Globe, BookOpen, Video, BarChart3, Gamepad2, S
 import askifyLogoNew from '@/assets/askify-logo-new.png';
 
 const destinations = [
+  { title: 'Offline AI', description: 'AI that works offline', icon: Brain, path: '/offline-ai', gradient: 'from-amber-500 to-orange-600' },
   { title: 'AI Chat', description: 'Chat with advanced AI models', icon: MessageSquare, path: '/chat', gradient: 'from-blue-500 to-blue-600' },
   { title: 'AI Studio', description: 'Images, tests & more', icon: Sparkles, path: '/ai-features', gradient: 'from-violet-500 to-purple-600' },
   { title: 'Public Chat', description: 'Chat with the community', icon: Globe, path: '/public-chat', gradient: 'from-cyan-500 to-blue-500' },
