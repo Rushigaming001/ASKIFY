@@ -3,13 +3,38 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.84.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
+
+// DDoS protection
+const ipCounts = new Map<string, { count: number; resetAt: number }>();
+function checkDDoS(req: Request): Response | null {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const now = Date.now();
+  const entry = ipCounts.get(ip);
+  if (entry && now < entry.resetAt) {
+    entry.count++;
+    if (entry.count > 20) {
+      return new Response(JSON.stringify({ error: "Too many requests" }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "60" },
+      });
+    }
+  } else {
+    ipCounts.set(ip, { count: 1, resetAt: now + 60000 });
+  }
+  if (ipCounts.size > 500) {
+    for (const [k, v] of ipCounts) { if (now > v.resetAt) ipCounts.delete(k); }
+  }
+  return null;
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const ddosBlock = checkDDoS(req);
+  if (ddosBlock) return ddosBlock;
 
   try {
     // Authentication check
