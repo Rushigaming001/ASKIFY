@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Video, VideoOff, Mic, MicOff, PhoneOff, Users, SwitchCamera, Monitor, Music, Minimize2, Maximize2 } from 'lucide-react';
+import { Video, VideoOff, Mic, MicOff, PhoneOff, Users, SwitchCamera, Monitor, Music, Minimize2, Maximize2, Circle, MessageSquare, X, Send } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Dialog,
   DialogContent,
@@ -37,7 +39,7 @@ export function WebRTCCall({
   const [isVideoOn, setIsVideoOn] = useState(callType === 'video');
   const [isMicOn, setIsMicOn] = useState(true);
   const [isConnecting, setIsConnecting] = useState(true);
-  const [callReady, setCallReady] = useState(false); // NEW: user must click to start
+  const [callReady, setCallReady] = useState(false);
   const [participants, setParticipants] = useState<Array<{ user_id: string; name: string }>>([]);
   const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
@@ -45,6 +47,18 @@ export function WebRTCCall({
   const [showMusicPlayer, setShowMusicPlayer] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isMobile] = useState(() => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
+  
+  // Call recording (owner only)
+  const [isRecording, setIsRecording] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
+  
+  // In-call chat
+  const [showCallChat, setShowCallChat] = useState(false);
+  const [callChatMessages, setCallChatMessages] = useState<Array<{ id: string; name: string; text: string; time: string }>>([]);
+  const [callChatInput, setCallChatInput] = useState('');
+  const callChatEndRef = useRef<HTMLDivElement>(null);
   
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
@@ -68,6 +82,21 @@ export function WebRTCCall({
       setIsConnecting(true);
     }
   }, [isOpen]);
+
+  // Check if current user is owner (for recording feature)
+  useEffect(() => {
+    if (!user) return;
+    const checkOwner = async () => {
+      const { data } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'owner' });
+      setIsOwner(!!data);
+    };
+    checkOwner();
+  }, [user]);
+
+  // Scroll chat to bottom
+  useEffect(() => {
+    callChatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [callChatMessages]);
 
   // Adaptive bandwidth control - maintains quality while reducing network usage
   const applyBandwidthConstraints = async (sender: RTCRtpSender) => {
@@ -350,6 +379,14 @@ export function WebRTCCall({
           await handleIceCandidate(payload);
         }
       })
+      .on('broadcast', { event: 'call-chat' }, ({ payload }) => {
+        if (payload && payload.name) {
+          setCallChatMessages(prev => {
+            if (prev.some(m => m.id === payload.id)) return prev;
+            return [...prev, payload];
+          });
+        }
+      })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           const { data: profile } = await supabase
@@ -387,6 +424,14 @@ export function WebRTCCall({
       .on('broadcast', { event: 'ice-candidate' }, async ({ payload }) => {
         if (payload.to === user.id) {
           await handleIceCandidate(payload);
+        }
+      })
+      .on('broadcast', { event: 'call-chat' }, ({ payload }) => {
+        if (payload && payload.name) {
+          setCallChatMessages(prev => {
+            if (prev.some(m => m.id === payload.id)) return prev;
+            return [...prev, payload];
+          });
         }
       })
       .subscribe((status) => {
@@ -640,7 +685,82 @@ export function WebRTCCall({
     }
   };
 
+  // ── Call Recording (Owner Only) ──
+  const startRecording = () => {
+    if (!localStreamRef.current) return;
+    try {
+      const streams: MediaStream[] = [localStreamRef.current];
+      remoteStreams.forEach(s => streams.push(s));
+      
+      // Create a combined stream using AudioContext
+      const audioCtx = new AudioContext();
+      const dest = audioCtx.createMediaStreamDestination();
+      streams.forEach(s => {
+        s.getAudioTracks().forEach(t => {
+          const source = audioCtx.createMediaStreamSource(new MediaStream([t]));
+          source.connect(dest);
+        });
+      });
+      
+      const combinedStream = new MediaStream([
+        ...localStreamRef.current.getVideoTracks(),
+        ...dest.stream.getAudioTracks()
+      ]);
+      
+      const recorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm;codecs=vp9,opus' });
+      recordedChunksRef.current = [];
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunksRef.current.push(e.data); };
+      recorder.onstop = () => {
+        const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `call-recording-${new Date().toISOString().slice(0,19)}.webm`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast({ title: 'Recording saved', description: 'Call recording has been downloaded.' });
+      };
+      recorder.start(1000);
+      mediaRecorderRef.current = recorder;
+      setIsRecording(true);
+      toast({ title: 'Recording started' });
+    } catch {
+      toast({ title: 'Error', description: 'Failed to start recording', variant: 'destructive' });
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current = null;
+      setIsRecording(false);
+    }
+  };
+
+  // ── In-Call Chat ──
+  const sendCallChatMessage = () => {
+    if (!callChatInput.trim() || !channelRef.current || !user) return;
+    const msg = {
+      id: Date.now().toString(),
+      name: user.name || 'You',
+      text: callChatInput.trim(),
+      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    };
+    channelRef.current.send({
+      type: 'broadcast',
+      event: 'call-chat',
+      payload: msg
+    });
+    setCallChatMessages(prev => [...prev, msg]);
+    setCallChatInput('');
+  };
+
   const cleanup = () => {
+    // Stop recording if active
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+
     // Stop bandwidth monitors
     bandwidthMonitorsRef.current.forEach(id => clearInterval(id));
     bandwidthMonitorsRef.current = [];
@@ -668,6 +788,8 @@ export function WebRTCCall({
     screenStreamRef.current = null;
     audioContextRef.current = null;
     setRemoteStreams(new Map());
+    setIsRecording(false);
+    setCallChatMessages([]);
   };
 
   const handleEndCall = () => {
@@ -839,40 +961,75 @@ export function WebRTCCall({
             </div>
           )}
 
+          {/* In-Call Chat Panel */}
+          {showCallChat && (
+            <div className="absolute top-4 right-4 w-80 bg-background/95 backdrop-blur-sm rounded-lg shadow-xl z-10 flex flex-col max-h-[60%]">
+              <div className="flex items-center justify-between p-3 border-b border-border">
+                <span className="text-sm font-medium">Chat</span>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowCallChat(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <ScrollArea className="flex-1 p-3">
+                <div className="space-y-2">
+                  {callChatMessages.map(msg => (
+                    <div key={msg.id} className="text-xs">
+                      <span className="font-medium text-primary">{msg.name}</span>
+                      <span className="text-muted-foreground ml-2">{msg.time}</span>
+                      <p className="text-foreground mt-0.5">{msg.text}</p>
+                    </div>
+                  ))}
+                  <div ref={callChatEndRef} />
+                </div>
+              </ScrollArea>
+              <div className="flex items-center gap-2 p-2 border-t border-border">
+                <Input
+                  value={callChatInput}
+                  onChange={(e) => setCallChatInput(e.target.value)}
+                  placeholder="Type a message..."
+                  className="text-xs h-8"
+                  onKeyDown={(e) => e.key === 'Enter' && sendCallChatMessage()}
+                />
+                <Button size="icon" className="h-8 w-8 flex-shrink-0" onClick={sendCallChatMessage}>
+                  <Send className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Call Controls */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-background/90 backdrop-blur-sm px-4 py-3 rounded-full shadow-xl flex-wrap justify-center">
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-background/90 backdrop-blur-sm px-4 py-3 rounded-full shadow-xl flex-wrap justify-center">
             {callType === 'video' && (
               <>
                 <Button
                   size="lg"
                   variant={isVideoOn ? "default" : "destructive"}
-                  className="rounded-full h-12 w-12"
+                  className="rounded-full h-11 w-11"
                   onClick={toggleVideo}
                   title={isVideoOn ? "Turn off camera" : "Turn on camera"}
                 >
-                  {isVideoOn ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
+                  {isVideoOn ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
                 </Button>
                 
                 <Button
                   size="lg"
                   variant="secondary"
-                  className="rounded-full h-12 w-12"
+                  className="rounded-full h-11 w-11"
                   onClick={switchCamera}
                   title="Switch camera"
                 >
-                  <SwitchCamera className="h-5 w-5" />
+                  <SwitchCamera className="h-4 w-4" />
                 </Button>
                 
-                {/* Hide screen share on mobile */}
                 {!isMobile && (
                   <Button
                     size="lg"
                     variant={isScreenSharing ? "default" : "secondary"}
-                    className="rounded-full h-12 w-12"
+                    className="rounded-full h-11 w-11"
                     onClick={toggleScreenShare}
                     title={isScreenSharing ? "Stop sharing" : "Share screen"}
                   >
-                    <Monitor className="h-5 w-5" />
+                    <Monitor className="h-4 w-4" />
                   </Button>
                 )}
               </>
@@ -881,31 +1038,55 @@ export function WebRTCCall({
             <Button
               size="lg"
               variant={isMicOn ? "default" : "destructive"}
-              className="rounded-full h-12 w-12"
+              className="rounded-full h-11 w-11"
               onClick={toggleMic}
               title={isMicOn ? "Mute" : "Unmute"}
             >
-              {isMicOn ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
+              {isMicOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
+            </Button>
+
+            {/* In-Call Chat Button */}
+            <Button
+              size="lg"
+              variant={showCallChat ? "default" : "secondary"}
+              className="rounded-full h-11 w-11"
+              onClick={() => { setShowCallChat(!showCallChat); setShowMusicPlayer(false); }}
+              title="Chat"
+            >
+              <MessageSquare className="h-4 w-4" />
             </Button>
 
             <Button
               size="lg"
               variant={showMusicPlayer ? "default" : "secondary"}
-              className="rounded-full h-12 w-12"
-              onClick={() => setShowMusicPlayer(!showMusicPlayer)}
+              className="rounded-full h-11 w-11"
+              onClick={() => { setShowMusicPlayer(!showMusicPlayer); setShowCallChat(false); }}
               title={showMusicPlayer ? "Hide music" : "Show music"}
             >
-              <Music className="h-5 w-5" />
+              <Music className="h-4 w-4" />
             </Button>
+
+            {/* Owner-Only Recording Button */}
+            {isOwner && (
+              <Button
+                size="lg"
+                variant={isRecording ? "destructive" : "secondary"}
+                className={`rounded-full h-11 w-11 ${isRecording ? 'animate-pulse' : ''}`}
+                onClick={isRecording ? stopRecording : startRecording}
+                title={isRecording ? "Stop recording" : "Record call"}
+              >
+                <Circle className={`h-4 w-4 ${isRecording ? 'fill-current' : ''}`} />
+              </Button>
+            )}
 
             <Button
               size="lg"
               variant="destructive"
-              className="rounded-full h-14 w-14"
+              className="rounded-full h-12 w-12"
               onClick={handleEndCall}
               title="End call"
             >
-              <PhoneOff className="h-6 w-6" />
+              <PhoneOff className="h-5 w-5" />
             </Button>
           </div>
         </div>

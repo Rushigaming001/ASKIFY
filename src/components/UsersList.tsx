@@ -276,10 +276,10 @@ export function UsersList({ onOpenDM }: UsersListProps) {
                 <div
                   className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background ${
                     u.status === 'online'
-                      ? 'bg-blue-500'
+                      ? 'bg-green-500'
                       : u.status === 'away'
                       ? 'bg-yellow-500'
-                      : 'bg-gray-400'
+                      : 'bg-muted-foreground/40'
                   }`}
                 />
               </div>

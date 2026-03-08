@@ -657,16 +657,16 @@ const YouTube = () => {
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             ) : (
-              <div className="space-y-2 px-2">
+              <div className="space-y-4 pb-2">
                 {displayVideos.map((video, index) => (
                   <div 
                     key={`${video.id}-${index}`}
                     ref={index === displayVideos.length - 1 ? lastVideoRef : null}
-                    className="flex gap-2.5 cursor-pointer active:opacity-90 transition-opacity p-1.5 rounded-lg"
+                    className="cursor-pointer active:opacity-90 transition-opacity"
                     onClick={() => playVideo(video)}
                   >
-                    {/* Thumbnail */}
-                    <div className="relative w-[160px] aspect-video rounded-lg overflow-hidden flex-shrink-0 bg-muted">
+                    {/* Full-width Thumbnail */}
+                    <div className="relative w-full aspect-video bg-muted">
                       <img 
                         src={video.thumbnail} 
                         alt={video.title}
@@ -677,34 +677,40 @@ const YouTube = () => {
                         }}
                       />
                       {video.duration && (
-                        <span className="absolute bottom-1 right-1 bg-black/85 text-white text-[10px] font-medium px-1 py-[1px] rounded-[3px]">
+                        <span className="absolute bottom-2 right-2 bg-black/85 text-white text-[11px] font-medium px-1.5 py-0.5 rounded">
                           {video.duration}
                         </span>
                       )}
                       {video.isLive && (
-                        <span className="absolute bottom-1 left-1 bg-[#FF0000] text-white text-[10px] font-semibold px-1 py-[1px] rounded-sm uppercase">
+                        <span className="absolute bottom-2 left-2 bg-[#FF0000] text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm uppercase">
                           Live
                         </span>
                       )}
                     </div>
-                    {/* Video Info */}
-                    <div className="flex-1 min-w-0 py-0.5">
-                      <h3 className="text-[13px] font-medium leading-[18px] line-clamp-2">{video.title}</h3>
-                      <p className="text-[11px] text-muted-foreground mt-1 leading-tight">
-                        <span 
-                          className="hover:text-foreground cursor-pointer"
-                          onClick={(e) => { e.stopPropagation(); if (video.channelId) fetchChannel(video.channelId); }}
-                        >
-                          {video.channel}
-                        </span>
-                      </p>
-                      <p className="text-[11px] text-muted-foreground leading-tight">
-                        {video.views}{' · '}{video.uploadedAt}
-                      </p>
+                    {/* Video Info Row */}
+                    <div className="flex gap-3 px-3 pt-2.5 pb-1">
+                      <Avatar 
+                        className="h-9 w-9 flex-shrink-0 mt-0.5 cursor-pointer"
+                        onClick={(e) => { e.stopPropagation(); if (video.channelId) fetchChannel(video.channelId); }}
+                      >
+                        <AvatarFallback className="text-xs bg-muted">{video.channel?.[0]}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-[14px] font-medium leading-[20px] line-clamp-2">{video.title}</h3>
+                        <p className="text-[12px] text-muted-foreground mt-0.5 leading-tight">
+                          <span 
+                            className="hover:text-foreground cursor-pointer"
+                            onClick={(e) => { e.stopPropagation(); if (video.channelId) fetchChannel(video.channelId); }}
+                          >
+                            {video.channel}
+                          </span>
+                          {' · '}{video.views}{' · '}{video.uploadedAt}
+                        </p>
+                      </div>
+                      <Button variant="ghost" size="icon" className="flex-shrink-0 h-8 w-8 self-start -mr-2" onClick={(e) => e.stopPropagation()}>
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <Button variant="ghost" size="icon" className="flex-shrink-0 h-7 w-7 self-start" onClick={(e) => e.stopPropagation()}>
-                      <MoreVertical className="h-3.5 w-3.5" />
-                    </Button>
                   </div>
                 ))}
                 

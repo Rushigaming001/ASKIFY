@@ -8,7 +8,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import {
   Video, VideoOff, Mic, MicOff, PhoneOff, Users, Monitor,
-  Send, ArrowLeft, MessageSquare, SwitchCamera, Crown, Shield
+  Send, ArrowLeft, MessageSquare, SwitchCamera, Crown, Shield,
+  Sparkles, Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -43,6 +44,8 @@ const StaffMeeting = () => {
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [userRole, setUserRole] = useState('');
+  const [aiSummary, setAiSummary] = useState('');
+  const [isSummarizing, setIsSummarizing] = useState(false);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
@@ -474,6 +477,42 @@ const StaffMeeting = () => {
           <Button size="lg" variant={isScreenSharing ? 'default' : 'secondary'} className="rounded-full h-12 w-12" onClick={toggleScreenShare}>
             <Monitor className="h-5 w-5" />
           </Button>
+          <Button 
+            size="lg" 
+            variant="secondary" 
+            className="rounded-full h-12 w-12" 
+            onClick={async () => {
+              if (chatMessages.length === 0) {
+                toast.error('No chat messages to summarize');
+                return;
+              }
+              setIsSummarizing(true);
+              try {
+                const chatText = chatMessages.map(m => `${m.name}: ${m.content}`).join('\n');
+                const { data, error } = await supabase.functions.invoke('askify-chat', {
+                  body: { 
+                    messages: [
+                      { role: 'system', content: 'You are a meeting assistant. Summarize the following staff meeting chat into clear action items, decisions, and key discussion points. Be concise.' },
+                      { role: 'user', content: `Summarize this staff meeting chat:\n\n${chatText}` }
+                    ],
+                    model: 'google/gemini-2.5-flash'
+                  }
+                });
+                if (error) throw error;
+                setAiSummary(data?.response || data?.content || 'No summary generated.');
+                setShowChat(true);
+                toast.success('Meeting summary generated!');
+              } catch {
+                toast.error('Failed to generate summary');
+              } finally {
+                setIsSummarizing(false);
+              }
+            }}
+            disabled={isSummarizing}
+            title="AI Summary"
+          >
+            {isSummarizing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
+          </Button>
           <Button size="lg" variant="destructive" className="rounded-full h-14 w-14" onClick={leaveMeeting}>
             <PhoneOff className="h-6 w-6" />
           </Button>
@@ -484,6 +523,18 @@ const StaffMeeting = () => {
       {showChat && (
         <div className="w-80 border-l border-border flex flex-col bg-background">
           <div className="p-3 border-b border-border font-semibold text-sm">Meeting Chat</div>
+          
+          {/* AI Summary */}
+          {aiSummary && (
+            <div className="m-3 p-3 rounded-lg bg-primary/10 border border-primary/20">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-primary mb-1.5">
+                <Sparkles className="h-3.5 w-3.5" />
+                AI Meeting Summary
+              </div>
+              <p className="text-xs text-foreground whitespace-pre-wrap leading-relaxed">{aiSummary}</p>
+            </div>
+          )}
+
           <ScrollArea className="flex-1 p-3">
             <div className="space-y-3">
               {chatMessages.map(msg => (
