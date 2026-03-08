@@ -596,25 +596,33 @@ const PublicChat = () => {
   };
 
   const renderMessageContent = (content: string) => {
-    // Parse @mentions and highlight them with better visibility
-    const parts = content.split(/(@\w+)/g);
-    return parts.map((part, i) => {
-      if (part.startsWith('@')) {
-        const isEveryone = part.toLowerCase() === '@everyone';
-        return (
-          <span 
-            key={i} 
-            className={`font-bold px-1 py-0.5 rounded ${
-              isEveryone 
-                ? 'bg-warning/30 text-warning-foreground' 
-                : 'bg-amber-500/30 text-amber-700 dark:text-amber-300'
-            }`}
-          >
-            {part}
-          </span>
-        );
+    // First, convert markdown bold **text** to <strong> while removing the asterisks
+    const segments = content.split(/(\*\*[^*]+\*\*)/g);
+    return segments.map((segment, si) => {
+      if (segment.startsWith('**') && segment.endsWith('**')) {
+        const boldText = segment.slice(2, -2);
+        return <strong key={`b-${si}`}>{boldText}</strong>;
       }
-      return part;
+      // Parse @mentions within each segment
+      const parts = segment.split(/(@\w+)/g);
+      return parts.map((part, i) => {
+        if (part.startsWith('@')) {
+          const isEveryone = part.toLowerCase() === '@everyone';
+          return (
+            <span 
+              key={`${si}-${i}`} 
+              className={`font-bold px-1 py-0.5 rounded ${
+                isEveryone 
+                  ? 'bg-warning/30 text-warning-foreground' 
+                  : 'bg-amber-500/30 text-amber-700 dark:text-amber-300'
+              }`}
+            >
+              {part}
+            </span>
+          );
+        }
+        return part;
+      });
     });
   };
 
