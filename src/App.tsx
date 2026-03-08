@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ChatProvider } from "./contexts/ChatContext";
+import { ProtectedAdminRoute } from "@/components/ProtectedRoute";
 import { Loader2 } from "lucide-react";
 
 // Lazy-load all pages for faster initial load
