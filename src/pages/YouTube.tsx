@@ -699,7 +699,7 @@ const YouTube = () => {
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : (
-              <div className="space-y-4 px-4">
+              <div className="space-y-4 px-4 max-w-2xl mx-auto">
                 {displayVideos.map((video, index) => (
                   <div 
                     key={`${video.id}-${index}`}
