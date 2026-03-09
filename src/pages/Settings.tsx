@@ -258,6 +258,30 @@ const Settings = () => {
           }
         },
         { 
+          icon: Camera, label: 'Camera & Microphone', subtitle: 'Request permissions',
+          onClick: async () => {
+            try {
+              toast({ title: 'Requesting permissions...' });
+              const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'user' }, 
+                audio: true 
+              });
+              stream.getTracks().forEach(t => t.stop());
+              toast({ title: 'Permissions granted!', description: 'Camera and microphone access enabled' });
+            } catch (err: any) {
+              if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                toast({ 
+                  title: 'Permission denied', 
+                  description: 'Please enable camera/mic in your browser or app settings',
+                  variant: 'destructive'
+                });
+              } else {
+                toast({ title: 'Error', description: err.message, variant: 'destructive' });
+              }
+            }
+          }
+        },
+        { 
           icon: RefreshCw, label: 'Update the app', subtitle: 'Clear cache & reload',
           onClick: async () => {
             toast({ title: 'Refreshing...' });

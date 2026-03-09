@@ -47,14 +47,34 @@ export function PermissionsPrompt() {
   const requestCameraAndMic = async () => {
     setRequesting(true);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      stream.getTracks().forEach(t => t.stop());
+      console.log('[Permissions] Requesting camera and microphone...');
+      
+      // Request both video and audio to trigger system-level permission dialogs
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'user' }, 
+        audio: true 
+      });
+      
+      console.log('[Permissions] Media access granted, tracks:', stream.getTracks().length);
+      
+      // Stop all tracks immediately after getting permission
+      stream.getTracks().forEach(t => {
+        console.log('[Permissions] Stopping track:', t.kind);
+        t.stop();
+      });
+      
       setCameraStatus('granted');
       setMicStatus('granted');
     } catch (err: any) {
-      if (err.name === 'NotAllowedError') {
+      console.error('[Permissions] Media access error:', err.name, err.message);
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
         setCameraStatus('denied');
         setMicStatus('denied');
+      } else if (err.name === 'NotFoundError') {
+        // Device doesn't have camera/mic, mark as granted to avoid blocking
+        console.log('[Permissions] No media devices found, skipping');
+        setCameraStatus('granted');
+        setMicStatus('granted');
       }
     }
     setRequesting(false);
