@@ -343,6 +343,16 @@ const Settings = () => {
       ]
     },
     {
+      title: 'Privacy',
+      items: [
+        { 
+          icon: MessageSquare, label: 'Who can DM me', 
+          subtitle: dmPrivacy === 'everyone' ? 'Everyone' : dmPrivacy === 'friends' ? 'Friends only' : 'Friends of friends',
+          onClick: () => setShowDmPrivacy(true)
+        },
+      ]
+    },
+    {
       title: 'Social',
       items: [
         { icon: User, label: 'Public Chat', onClick: () => navigate('/public-chat') },
