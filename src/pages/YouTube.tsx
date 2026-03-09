@@ -346,7 +346,7 @@ const YouTube = () => {
   // ─── Search Screen ───
   if (showSearch) {
     return (
-      <div className="flex flex-col h-screen bg-white dark:bg-[#0f0f0f] dark:text-white">
+      <div className="flex flex-col h-screen bg-white dark:bg-[#0f0f0f] dark:text-white max-w-[480px] mx-auto w-full">
         <div className="flex items-center gap-2 px-2 py-2.5 border-b border-border/30">
           <Button variant="ghost" size="icon" onClick={() => setShowSearch(false)} className="text-foreground">
             <ArrowLeft className="h-5 w-5" />
