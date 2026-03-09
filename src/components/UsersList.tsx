@@ -84,6 +84,10 @@ export function UsersList({ onOpenDM }: UsersListProps) {
     // Combine data
     const usersWithStatus: User[] = profiles.map(profile => {
       const presence = presenceData?.find(p => p.user_id === profile.id);
+      // Treat as offline if last_seen is older than 90 seconds
+      const isStale = presence?.last_seen
+        ? (Date.now() - new Date(presence.last_seen).getTime()) > 90_000
+        : true;
       const friendship = friendships?.find(
         f => f.user_id === profile.id || f.friend_id === profile.id
       );
