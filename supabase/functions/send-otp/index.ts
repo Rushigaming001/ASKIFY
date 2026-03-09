@@ -77,54 +77,139 @@ serve(async (req) => {
     }
 
     const emailHtml = `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Askify Verification Code</title>
+  <meta name="color-scheme" content="light">
+  <title>Askify — Verification Code</title>
+  <style>
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+  </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f0f7ff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-  <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="100%" style="max-width: 600px; margin: 0 auto;">
+<body style="margin: 0; padding: 0; background-color: #0b0f1a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="100%" style="max-width: 620px; margin: 0 auto;">
     <tr>
-      <td style="padding: 40px 20px;">
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: white; border-radius: 24px; box-shadow: 0 10px 40px rgba(59, 130, 246, 0.1); overflow: hidden;">
+      <td style="padding: 48px 20px 32px;">
+        
+        <!-- Main Card -->
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #111827; border-radius: 20px; overflow: hidden; border: 1px solid rgba(59,130,246,0.15); box-shadow: 0 0 80px rgba(59,130,246,0.08), 0 25px 50px -12px rgba(0,0,0,0.5);">
+          
+          <!-- Animated Header Bar -->
           <tr>
-            <td style="background: linear-gradient(135deg, #3b82f6, #06b6d4); padding: 40px 30px; text-align: center;">
-              <h1 style="color: white; font-size: 32px; font-weight: 800; margin: 0; letter-spacing: -0.5px;">ASKIFY</h1>
-              <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin: 8px 0 0; font-weight: 500;">Your Intelligent AI Companion</p>
+            <td style="height: 4px; background: linear-gradient(90deg, #3b82f6, #06b6d4, #8b5cf6, #3b82f6); background-size: 200% 100%; animation: shimmer 3s ease-in-out infinite;"></td>
+          </tr>
+
+          <!-- Logo Section -->
+          <tr>
+            <td style="padding: 36px 40px 20px; text-align: center;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+                <tr>
+                  <td style="background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(6,182,212,0.1)); border: 1px solid rgba(59,130,246,0.2); border-radius: 16px; padding: 14px 18px;">
+                    <img src="https://wexmklgizitrjitkalry.supabase.co/storage/v1/object/public/profiles/askify-logo.png" alt="Askify" width="44" height="44" style="display: block; border-radius: 10px;" onerror="this.style.display='none'">
+                  </td>
+                </tr>
+              </table>
+              <h1 style="color: #ffffff; font-size: 26px; font-weight: 700; margin: 16px 0 0; letter-spacing: -0.3px;">ASKIFY</h1>
+              <p style="color: #64748b; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 3px; margin: 6px 0 0;">Intelligent AI Platform</p>
             </td>
           </tr>
+
+          <!-- Divider -->
           <tr>
-            <td style="padding: 40px 30px;">
-              <h2 style="color: #1e293b; font-size: 22px; font-weight: 700; margin: 0 0 8px; text-align: center;">
-                ${otpPurpose === 'register' ? 'Welcome to Askify!' : 'Verify Your Identity'}
+            <td style="padding: 0 40px;">
+              <div style="height: 1px; background: linear-gradient(90deg, transparent, rgba(59,130,246,0.3), transparent);"></div>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 32px 40px 16px;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                  <td style="background: rgba(59,130,246,0.08); border-radius: 10px; padding: 3px 14px; display: inline-block; margin-bottom: 16px;">
+                    <p style="color: #60a5fa; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin: 6px 0;">${otpPurpose === 'register' ? '🚀 Account Setup' : '🔐 Security Verification'}</p>
+                  </td>
+                </tr>
+              </table>
+              <h2 style="color: #f1f5f9; font-size: 22px; font-weight: 700; margin: 8px 0 12px; line-height: 1.3;">
+                ${otpPurpose === 'register' ? 'Welcome aboard, future explorer.' : 'Authentication required.'}
               </h2>
-              <p style="color: #64748b; font-size: 15px; line-height: 1.6; text-align: center; margin: 0 0 30px;">
+              <p style="color: #94a3b8; font-size: 15px; line-height: 1.7; margin: 0 0 28px;">
                 ${otpPurpose === 'register'
-                  ? 'Thank you for joining Askify. Use this verification code to complete your registration:'
-                  : 'A sign-in attempt was detected for your account. Enter this code to verify:'}
-              </p>
-              <div style="background: linear-gradient(135deg, #eff6ff, #ecfeff); border: 2px solid #bfdbfe; border-radius: 16px; padding: 24px; text-align: center; margin: 0 0 30px;">
-                <p style="color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin: 0 0 12px;">Verification Code</p>
-                <p style="color: #1e40af; font-size: 42px; font-weight: 800; letter-spacing: 12px; margin: 0; font-family: 'Courier New', monospace;">${code}</p>
-              </div>
-              <p style="color: #94a3b8; font-size: 13px; text-align: center; margin: 0 0 8px;">
-                ⏱ This code expires in <strong>10 minutes</strong>
-              </p>
-              <p style="color: #94a3b8; font-size: 13px; text-align: center; margin: 0;">
-                🔒 If you didn't request this, please ignore this email.
+                  ? 'Your Askify account is almost ready. Enter the verification code below to activate your account and unlock full access.'
+                  : 'A sign-in attempt was detected on your account. Use the one-time code below to authenticate securely.'}
               </p>
             </td>
           </tr>
+
+          <!-- OTP Code Box -->
           <tr>
-            <td style="background: #f8fafc; padding: 20px 30px; border-top: 1px solid #e2e8f0;">
-              <p style="color: #94a3b8; font-size: 12px; text-align: center; margin: 0;">
-                © ${new Date().getFullYear()} Askify — Made by Mr. Rudra<br>
-                Your data is securely protected. Never share your verification code.
+            <td style="padding: 0 40px 28px;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(139,92,246,0.06)); border: 1px solid rgba(59,130,246,0.2); border-radius: 16px;">
+                <tr>
+                  <td style="padding: 28px 24px; text-align: center;">
+                    <p style="color: #64748b; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 2.5px; margin: 0 0 14px;">One-Time Passcode</p>
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+                      <tr>
+                        ${code.split('').map((digit: string) => `
+                        <td style="padding: 0 4px;">
+                          <div style="width: 48px; height: 58px; background: rgba(15,23,42,0.8); border: 1px solid rgba(59,130,246,0.3); border-radius: 12px; line-height: 58px; text-align: center; color: #60a5fa; font-size: 28px; font-weight: 800; font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;">${digit}</div>
+                        </td>
+                        `).join('')}
+                      </tr>
+                    </table>
+                    <p style="color: #475569; font-size: 12px; margin: 16px 0 0; animation: pulse 2s ease-in-out infinite;">
+                      ⏳ Expires in <strong style="color: #60a5fa;">10 minutes</strong>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Security Notice -->
+          <tr>
+            <td style="padding: 0 40px 32px;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: rgba(234,179,8,0.05); border: 1px solid rgba(234,179,8,0.12); border-radius: 12px;">
+                <tr>
+                  <td style="padding: 16px 20px;">
+                    <p style="color: #a3a3a3; font-size: 13px; line-height: 1.6; margin: 0;">
+                      🛡️ <strong style="color: #d4d4d8;">Security Notice:</strong> Askify will never ask for your password via email. If you did not initiate this request, you can safely disregard this message.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr>
+            <td style="padding: 0 40px;">
+              <div style="height: 1px; background: linear-gradient(90deg, transparent, rgba(59,130,246,0.2), transparent);"></div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 40px 28px; text-align: center;">
+              <p style="color: #475569; font-size: 12px; line-height: 1.6; margin: 0 0 8px;">
+                © ${new Date().getFullYear()} <strong style="color: #64748b;">Askify</strong> — Built by <strong style="color: #64748b;">Mr. Rudra</strong>
+              </p>
+              <p style="color: #374151; font-size: 11px; margin: 0;">
+                Secured with end-to-end encryption • Never share your verification code
               </p>
             </td>
           </tr>
+
+          <!-- Bottom Gradient Bar -->
+          <tr>
+            <td style="height: 4px; background: linear-gradient(90deg, #8b5cf6, #3b82f6, #06b6d4, #8b5cf6); background-size: 200% 100%; animation: shimmer 3s ease-in-out infinite;"></td>
+          </tr>
+
         </table>
+
       </td>
     </tr>
   </table>
