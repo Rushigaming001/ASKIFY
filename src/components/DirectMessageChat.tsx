@@ -749,15 +749,21 @@ export function DirectMessageChat({ recipientId, recipientName, onClose }: Direc
             </Button>
           </div>
         )}
-        <EnhancedChatInput
-          onSend={handleSendMessage}
-          placeholder={replyingTo ? `Reply…` : `Message ${recipientName}…`}
-          disabled={isLoading}
-          userId={user?.id}
-          onTyping={sendTyping}
-          maxFileSize={200}
-          chatType="dm"
-        />
+        {dmBlocked ? (
+          <div className="px-4 py-3 text-center text-sm text-muted-foreground bg-muted/50 rounded-lg mx-2 mb-2">
+            🔒 {dmBlockReason}
+          </div>
+        ) : (
+          <EnhancedChatInput
+            onSend={handleSendMessage}
+            placeholder={replyingTo ? `Reply…` : `Message ${recipientName}…`}
+            disabled={isLoading}
+            userId={user?.id}
+            onTyping={sendTyping}
+            maxFileSize={200}
+            chatType="dm"
+          />
+        )}
       </div>
 
       {/* Edit Dialog */}
