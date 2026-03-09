@@ -81,6 +81,31 @@ const Index = () => {
           Explain
         </Button>
       </div>
+
+      {/* Offline AI Section */}
+      <div className="mt-16 mb-8 w-full max-w-2xl">
+        <div
+          onClick={() => navigate('/offline-ai')}
+          className="group cursor-pointer rounded-2xl border border-border bg-card/50 p-6 transition-all hover:border-primary/40 hover:bg-card/80 hover:shadow-lg"
+        >
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
+              <Brain className="h-6 w-6" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-base font-semibold flex items-center gap-2">
+                Offline AI
+                <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  <WifiOff className="h-3 w-3" /> No internet needed
+                </span>
+              </h3>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Run AI locally in your browser. Works completely offline after first download.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
