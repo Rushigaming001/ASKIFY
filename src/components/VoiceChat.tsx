@@ -7,22 +7,23 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { MusicPlayer } from '@/components/MusicPlayer';
 
-type VoiceType = 'male' | 'female';
+type VoiceType = 'male' | 'female' | 'deep-male' | 'soft-female' | 'child' | 'narrator';
 
 const VOICE_MODELS = [
-  { id: 'gemini-2.5-flash', name: 'Gemini Flash', description: 'Fast & balanced' },
   { id: 'gemini-2.5-flash-lite', name: 'Gemini Lite', description: 'Fastest response' },
+  { id: 'gemini-2.5-flash', name: 'Gemini Flash', description: 'Fast & balanced' },
   { id: 'gemma-3-4b', name: 'Gemma 3 4B', description: 'Lightweight & quick' },
   { id: 'gemma-3-12b', name: 'Gemma 3 12B', description: 'Better quality' },
   { id: 'gemma-3-27b', name: 'Gemma 3 27B', description: 'Best quality' },
   { id: 'grok', name: 'Core (Groq)', description: 'Ultra fast' },
 ];
 
-// Noise filtering constants
-const MIN_CONFIDENCE = 0.75; // Minimum confidence to accept speech
-const MIN_WORD_COUNT = 2; // Minimum words to process (filters out random noise like "uh", "hmm")
-const SILENCE_TIMEOUT_MS = 2000; // Wait 2s of silence before processing
-const NOISE_WORDS = new Set(['', 'uh', 'um', 'hmm', 'hm', 'ah', 'oh', 'eh', 'mhm', 'the', 'a', 'i']);
+// Noise filtering constants - RELAXED to prevent premature cutoff
+const MIN_CONFIDENCE = 0.5; // Lowered: accept more speech, filter less aggressively
+const MIN_WORD_COUNT = 2; // Minimum words to process
+const SILENCE_TIMEOUT_MS = 3500; // Increased: wait 3.5s of silence before processing (was 2s)
+const FINAL_RESULT_DELAY_MS = 1500; // Wait 1.5s after final result before processing (was 800ms)
+const NOISE_WORDS = new Set(['', 'uh', 'um', 'hmm', 'hm', 'ah', 'oh', 'eh', 'mhm']);
 
 export function VoiceChat() {
   const [isConnected, setIsConnected] = useState(false);
