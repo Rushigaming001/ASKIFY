@@ -38,14 +38,8 @@ export function UsersList({ onOpenDM }: UsersListProps) {
       .channel('user-presence')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_presence'
-        },
-        () => {
-          loadUsers();
-        }
+        { event: '*', schema: 'public', table: 'user_presence' },
+        () => { loadUsers(); }
       )
       .subscribe();
 
@@ -54,45 +48,16 @@ export function UsersList({ onOpenDM }: UsersListProps) {
       .channel('friendships-updates')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'friendships'
-        },
-        () => {
-          loadUsers();
-        }
+        { event: '*', schema: 'public', table: 'friendships' },
+        () => { loadUsers(); }
       )
       .subscribe();
 
-    // Update own presence to online
-    updatePresence('online');
-
-    // Update presence periodically
-    const interval = setInterval(() => {
-      updatePresence('online');
-    }, 30000); // Every 30 seconds
-
     return () => {
-      updatePresence('offline');
       supabase.removeChannel(presenceChannel);
       supabase.removeChannel(friendshipChannel);
-      clearInterval(interval);
     };
   }, [user]);
-
-  const updatePresence = async (status: 'online' | 'offline' | 'away') => {
-    if (!user) return;
-    
-    await supabase
-      .from('user_presence')
-      .upsert({
-        user_id: user.id,
-        status,
-        last_seen: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
-  };
 
   const loadUsers = async () => {
     if (!user) return;
@@ -108,7 +73,7 @@ export function UsersList({ onOpenDM }: UsersListProps) {
     // Load presence data
     const { data: presenceData } = await supabase
       .from('user_presence')
-      .select('user_id, status');
+      .select('user_id, status, last_seen');
 
     // Load friendships
     const { data: friendships } = await supabase
@@ -119,6 +84,10 @@ export function UsersList({ onOpenDM }: UsersListProps) {
     // Combine data
     const usersWithStatus: User[] = profiles.map(profile => {
       const presence = presenceData?.find(p => p.user_id === profile.id);
+      // Treat as offline if last_seen is older than 90 seconds
+      const isStale = presence?.last_seen
+        ? (Date.now() - new Date(presence.last_seen).getTime()) > 90_000
+        : true;
       const friendship = friendships?.find(
         f => f.user_id === profile.id || f.friend_id === profile.id
       );
@@ -136,7 +105,7 @@ export function UsersList({ onOpenDM }: UsersListProps) {
 
       return {
         ...profile,
-        status: (presence?.status as 'online' | 'offline' | 'away') || 'offline',
+        status: (!isStale && presence?.status === 'online') ? 'online' : 'offline',
         friendship_status: friendshipStatus,
         friendship_id: friendshipId,
         is_request_receiver: isRequestReceiver

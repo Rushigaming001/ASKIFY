@@ -96,7 +96,7 @@ export function FriendRequestsPanel({ onOpenDM }: FriendRequestsPanelProps) {
 
       const { data: presence } = await supabase
         .from('user_presence')
-        .select('user_id, status')
+        .select('user_id, status, last_seen')
         .in('user_id', Array.from(userIds));
 
       if (profs) {
@@ -106,7 +106,12 @@ export function FriendRequestsPanel({ onOpenDM }: FriendRequestsPanelProps) {
       }
       if (presence) {
         const pMap = new Map<string, string>();
-        presence.forEach(p => pMap.set(p.user_id, p.status));
+        presence.forEach(p => {
+          const isStale = p.last_seen
+            ? (Date.now() - new Date(p.last_seen).getTime()) > 90_000
+            : true;
+          pMap.set(p.user_id, (!isStale && p.status === 'online') ? 'online' : 'offline');
+        });
         setPresenceMap(pMap);
       }
     }
