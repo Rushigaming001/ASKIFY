@@ -540,6 +540,45 @@ const Settings = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* DM Privacy Dialog */}
+      <Dialog open={showDmPrivacy} onOpenChange={setShowDmPrivacy}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Who can DM you?</DialogTitle>
+            <DialogDescription>
+              Control who is allowed to send you direct messages.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-2">
+            {[
+              { value: 'everyone' as const, label: 'Everyone', desc: 'Any user on the platform can message you' },
+              { value: 'friends' as const, label: 'Friends only', desc: 'Only your friends can send you DMs' },
+              { value: 'friends_of_friends' as const, label: 'Friends of friends', desc: 'Your friends and their friends can DM you' },
+            ].map((option) => (
+              <button
+                key={option.value}
+                onClick={() => { saveDmPrivacy(option.value); setShowDmPrivacy(false); }}
+                className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-colors text-left ${
+                  dmPrivacy === option.value 
+                    ? 'border-primary bg-primary/5' 
+                    : 'border-border hover:bg-muted/50'
+                }`}
+              >
+                <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${
+                  dmPrivacy === option.value ? 'border-primary' : 'border-muted-foreground'
+                }`}>
+                  {dmPrivacy === option.value && <div className="h-2 w-2 rounded-full bg-primary" />}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">{option.label}</p>
+                  <p className="text-xs text-muted-foreground">{option.desc}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
