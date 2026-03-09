@@ -33,7 +33,7 @@ export function VoiceChat() {
   const [showMusicPlayer, setShowMusicPlayer] = useState(false);
   const [musicStream, setMusicStream] = useState<MediaStream | null>(null);
   const [voiceType, setVoiceType] = useState<VoiceType>('female');
-  const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
+  const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash-lite');
   const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [liveTranscript, setLiveTranscript] = useState('');
