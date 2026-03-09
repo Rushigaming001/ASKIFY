@@ -50,6 +50,10 @@ const Settings = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordLoading, setPasswordLoading] = useState(false);
 
+  // DM Privacy
+  const [dmPrivacy, setDmPrivacy] = useState<'everyone' | 'friends' | 'friends_of_friends'>('everyone');
+  const [showDmPrivacy, setShowDmPrivacy] = useState(false);
+
   // Accent color
   const [accentColor, setAccentColor] = useState('Default');
 
