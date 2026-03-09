@@ -59,19 +59,6 @@ export function UsersList({ onOpenDM }: UsersListProps) {
     };
   }, [user]);
 
-  const updatePresence = async (status: 'online' | 'offline' | 'away') => {
-    if (!user) return;
-    
-    await supabase
-      .from('user_presence')
-      .upsert({
-        user_id: user.id,
-        status,
-        last_seen: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
-  };
-
   const loadUsers = async () => {
     if (!user) return;
 
