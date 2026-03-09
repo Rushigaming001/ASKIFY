@@ -173,20 +173,22 @@ export function usePushNotifications() {
     body: string,
     data?: Record<string, unknown>
   ) => {
+    console.log('[Push] Attempting to send notification:', { userId, title, body });
+    
     try {
       const { data: response, error } = await supabase.functions.invoke('send-push-notification', {
         body: { userId, title, body, data },
       });
 
       if (error) {
-        console.error('Error sending notification:', error);
+        console.error('[Push] Error sending notification:', error);
         return false;
       }
 
-      console.log('Notification sent:', response);
-      return true;
+      console.log('[Push] Notification response:', response);
+      return response?.sent > 0;
     } catch (error) {
-      console.error('Error sending notification:', error);
+      console.error('[Push] Exception sending notification:', error);
       return false;
     }
   }, []);
