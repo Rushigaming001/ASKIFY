@@ -346,7 +346,7 @@ const YouTube = () => {
   // ─── Search Screen ───
   if (showSearch) {
     return (
-      <div className="flex flex-col h-screen bg-white dark:bg-[#0f0f0f] dark:text-white">
+      <div className="flex flex-col h-screen bg-white dark:bg-[#0f0f0f] dark:text-white max-w-[480px] mx-auto w-full">
         <div className="flex items-center gap-2 px-2 py-2.5 border-b border-border/30">
           <Button variant="ghost" size="icon" onClick={() => setShowSearch(false)} className="text-foreground">
             <ArrowLeft className="h-5 w-5" />
@@ -390,7 +390,7 @@ const YouTube = () => {
   // ─── Channel Page ───
   if (selectedChannel) {
     return (
-      <div className="flex flex-col h-screen bg-white dark:bg-[#0f0f0f] dark:text-white">
+      <div className="flex flex-col h-screen bg-white dark:bg-[#0f0f0f] dark:text-white max-w-[480px] mx-auto w-full">
         <div className="flex items-center gap-1 px-1 py-2 border-b border-border/30">
           <Button variant="ghost" size="icon" onClick={() => setSelectedChannel(null)}>
             <ArrowLeft className="h-5 w-5" />
@@ -569,7 +569,7 @@ const YouTube = () => {
 
   // ─── Main Layout ───
   return (
-    <div className="flex flex-col h-screen bg-white dark:bg-[#0f0f0f] dark:text-white">
+    <div className="flex flex-col h-screen bg-white dark:bg-[#0f0f0f] dark:text-white max-w-[480px] mx-auto w-full">
       {/* YouTube Header */}
       <header className="px-2 py-1.5 flex items-center gap-1 bg-white dark:bg-[#0f0f0f] sticky top-0 z-40">
         <Button variant="ghost" size="icon" onClick={() => navigate('/')} className="h-10 w-10">
