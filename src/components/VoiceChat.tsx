@@ -403,7 +403,7 @@ export function VoiceChat() {
         setLiveTranscript(finalTranscript + interimTranscript);
 
         if (finalTranscript.trim()) {
-          // Process final transcript after short silence
+          // Wait longer before processing - let user finish their thought
           silenceTimeout = setTimeout(() => {
             if (finalTranscript.trim() && isConnectedRef.current && !isSpeakingRef.current) {
               const toProcess = finalTranscript.trim();
@@ -412,13 +412,12 @@ export function VoiceChat() {
               recognitionRef.current?.stop();
               processUserSpeech(toProcess);
             }
-          }, 800); // Short pause after final result
+          }, FINAL_RESULT_DELAY_MS); // Use the constant (1.5s)
         } else if (interimTranscript.trim()) {
-          // For interim results, use longer silence timeout and check confidence
+          // For interim results, use longer silence timeout
           silenceTimeout = setTimeout(() => {
             if (interimTranscript.trim() && isConnectedRef.current && !isSpeakingRef.current) {
-              // Only process interim if it looks like real speech
-              if (isMeaningfulSpeech(interimTranscript, maxConfidence > 0 ? maxConfidence : 0.8)) {
+              if (isMeaningfulSpeech(interimTranscript, maxConfidence > 0 ? maxConfidence : 0.6)) {
                 const toProcess = interimTranscript.trim();
                 finalTranscript = '';
                 setLiveTranscript('');
@@ -426,7 +425,7 @@ export function VoiceChat() {
                 processUserSpeech(toProcess);
               }
             }
-          }, SILENCE_TIMEOUT_MS);
+          }, SILENCE_TIMEOUT_MS); // 3.5s for interim
         }
       };
 
