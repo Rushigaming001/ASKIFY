@@ -403,6 +403,10 @@ export function DirectMessageChat({ recipientId, recipientName, onClose }: Direc
 
   const handleSendMessage = async (content: string, imageUrl?: string) => {
     if ((!content.trim() && !imageUrl) || !user) return;
+    if (dmBlocked) {
+      toast({ title: 'Cannot send message', description: dmBlockReason, variant: 'destructive' });
+      return;
+    }
 
     const messageContent = content.trim();
     const replyToId = replyingTo?.id || null;
