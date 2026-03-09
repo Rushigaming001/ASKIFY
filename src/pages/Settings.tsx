@@ -14,8 +14,11 @@ import {
 import { 
   ArrowLeft, User, Zap, Mail, Sun, Moon, Monitor, Palette, 
   Settings as SettingsIcon, Mic, Database, Shield, Info, LogOut, Bell, BellOff, 
-  RefreshCw, Pencil, Camera, Lock, Download, ChevronRight
+  RefreshCw, Pencil, Camera, Lock, Download, ChevronRight, MessageSquare, Users
 } from 'lucide-react';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 
@@ -47,6 +50,10 @@ const Settings = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordLoading, setPasswordLoading] = useState(false);
 
+  // DM Privacy
+  const [dmPrivacy, setDmPrivacy] = useState<'everyone' | 'friends' | 'friends_of_friends'>('everyone');
+  const [showDmPrivacy, setShowDmPrivacy] = useState(false);
+
   // Accent color
   const [accentColor, setAccentColor] = useState('Default');
 
@@ -54,8 +61,33 @@ const Settings = () => {
     if (user?.id) {
       loadProfile();
       load2FAStatus();
+      loadDmPrivacy();
     }
   }, [user?.id]);
+
+  const loadDmPrivacy = async () => {
+    const { data } = await supabase
+      .from('app_settings')
+      .select('value')
+      .eq('key', `dm_privacy_${user!.id}`)
+      .maybeSingle();
+    if (data?.value && typeof data.value === 'object' && 'setting' in (data.value as any)) {
+      setDmPrivacy((data.value as any).setting);
+    }
+  };
+
+  const saveDmPrivacy = async (value: 'everyone' | 'friends' | 'friends_of_friends') => {
+    setDmPrivacy(value);
+    const { error } = await supabase.from('app_settings').upsert({
+      key: `dm_privacy_${user!.id}`,
+      value: { setting: value }
+    }, { onConflict: 'key' });
+    if (error) {
+      toast({ title: 'Failed to save', variant: 'destructive' });
+    } else {
+      toast({ title: 'DM privacy updated' });
+    }
+  };
 
   const loadProfile = async () => {
     const { data } = await supabase
@@ -311,6 +343,16 @@ const Settings = () => {
       ]
     },
     {
+      title: 'Privacy',
+      items: [
+        { 
+          icon: MessageSquare, label: 'Who can DM me', 
+          subtitle: dmPrivacy === 'everyone' ? 'Everyone' : dmPrivacy === 'friends' ? 'Friends only' : 'Friends of friends',
+          onClick: () => setShowDmPrivacy(true)
+        },
+      ]
+    },
+    {
       title: 'Social',
       items: [
         { icon: User, label: 'Public Chat', onClick: () => navigate('/public-chat') },
@@ -496,6 +538,45 @@ const Settings = () => {
               {passwordLoading ? 'Updating...' : 'Update Password'}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* DM Privacy Dialog */}
+      <Dialog open={showDmPrivacy} onOpenChange={setShowDmPrivacy}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Who can DM you?</DialogTitle>
+            <DialogDescription>
+              Control who is allowed to send you direct messages.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-2">
+            {[
+              { value: 'everyone' as const, label: 'Everyone', desc: 'Any user on the platform can message you' },
+              { value: 'friends' as const, label: 'Friends only', desc: 'Only your friends can send you DMs' },
+              { value: 'friends_of_friends' as const, label: 'Friends of friends', desc: 'Your friends and their friends can DM you' },
+            ].map((option) => (
+              <button
+                key={option.value}
+                onClick={() => { saveDmPrivacy(option.value); setShowDmPrivacy(false); }}
+                className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-colors text-left ${
+                  dmPrivacy === option.value 
+                    ? 'border-primary bg-primary/5' 
+                    : 'border-border hover:bg-muted/50'
+                }`}
+              >
+                <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${
+                  dmPrivacy === option.value ? 'border-primary' : 'border-muted-foreground'
+                }`}>
+                  {dmPrivacy === option.value && <div className="h-2 w-2 rounded-full bg-primary" />}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">{option.label}</p>
+                  <p className="text-xs text-muted-foreground">{option.desc}</p>
+                </div>
+              </button>
+            ))}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

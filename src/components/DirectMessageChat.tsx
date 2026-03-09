@@ -86,6 +86,8 @@ export function DirectMessageChat({ recipientId, recipientName, onClose }: Direc
   const [editContent, setEditContent] = useState('');
   const [recipientAvatar, setRecipientAvatar] = useState<string | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [dmBlocked, setDmBlocked] = useState(false);
+  const [dmBlockReason, setDmBlockReason] = useState('');
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastMessageTimestampRef = useRef<string | null>(null);
@@ -186,6 +188,87 @@ export function DirectMessageChat({ recipientId, recipientName, onClose }: Direc
     loadMessages();
     loadCallEvents();
     loadRecipientProfile();
+
+    // Check recipient's DM privacy setting
+    const checkDmPrivacy = async () => {
+      try {
+        const { data: privacyData } = await supabase
+          .from('app_settings')
+          .select('value')
+          .eq('key', `dm_privacy_${recipientId}`)
+          .maybeSingle();
+        
+        const setting = (privacyData?.value as any)?.setting || 'everyone';
+        
+        if (setting === 'everyone') {
+          setDmBlocked(false);
+          return;
+        }
+        
+        if (setting === 'friends') {
+          // Check if we are friends
+          const { data: friendship } = await supabase
+            .from('friendships')
+            .select('id')
+            .or(`and(user_id.eq.${user.id},friend_id.eq.${recipientId},status.eq.accepted),and(user_id.eq.${recipientId},friend_id.eq.${user.id},status.eq.accepted)`)
+            .maybeSingle();
+          
+          if (!friendship) {
+            setDmBlocked(true);
+            setDmBlockReason('This user only accepts DMs from friends.');
+          }
+          return;
+        }
+        
+        if (setting === 'friends_of_friends') {
+          // Check direct friendship first
+          const { data: directFriend } = await supabase
+            .from('friendships')
+            .select('id')
+            .or(`and(user_id.eq.${user.id},friend_id.eq.${recipientId},status.eq.accepted),and(user_id.eq.${recipientId},friend_id.eq.${user.id},status.eq.accepted)`)
+            .maybeSingle();
+          
+          if (directFriend) {
+            setDmBlocked(false);
+            return;
+          }
+          
+          // Check friends of friends: get my friends, then see if any are friends with recipient
+          const { data: myFriends } = await supabase
+            .from('friendships')
+            .select('user_id, friend_id')
+            .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
+            .eq('status', 'accepted');
+          
+          if (myFriends && myFriends.length > 0) {
+            const myFriendIds = myFriends.map(f => f.user_id === user.id ? f.friend_id : f.user_id);
+            
+            const { data: mutualCheck } = await supabase
+              .from('friendships')
+              .select('id')
+              .or(
+                myFriendIds.map(fid => 
+                  `and(user_id.eq.${fid},friend_id.eq.${recipientId},status.eq.accepted),and(user_id.eq.${recipientId},friend_id.eq.${fid},status.eq.accepted)`
+                ).join(',')
+              )
+              .limit(1);
+            
+            if (mutualCheck && mutualCheck.length > 0) {
+              setDmBlocked(false);
+              return;
+            }
+          }
+          
+          setDmBlocked(true);
+          setDmBlockReason('This user only accepts DMs from friends or friends of friends.');
+        }
+      } catch (e) {
+        // On error, allow DM
+        setDmBlocked(false);
+      }
+    };
+    
+    checkDmPrivacy();
 
     // Primary: Realtime subscription with proper channel per conversation
     const channelName = [user.id, recipientId].sort().join('-dm-');
@@ -320,6 +403,10 @@ export function DirectMessageChat({ recipientId, recipientName, onClose }: Direc
 
   const handleSendMessage = async (content: string, imageUrl?: string) => {
     if ((!content.trim() && !imageUrl) || !user) return;
+    if (dmBlocked) {
+      toast({ title: 'Cannot send message', description: dmBlockReason, variant: 'destructive' });
+      return;
+    }
 
     const messageContent = content.trim();
     const replyToId = replyingTo?.id || null;
@@ -662,15 +749,21 @@ export function DirectMessageChat({ recipientId, recipientName, onClose }: Direc
             </Button>
           </div>
         )}
-        <EnhancedChatInput
-          onSend={handleSendMessage}
-          placeholder={replyingTo ? `Reply…` : `Message ${recipientName}…`}
-          disabled={isLoading}
-          userId={user?.id}
-          onTyping={sendTyping}
-          maxFileSize={200}
-          chatType="dm"
-        />
+        {dmBlocked ? (
+          <div className="px-4 py-3 text-center text-sm text-muted-foreground bg-muted/50 rounded-lg mx-2 mb-2">
+            🔒 {dmBlockReason}
+          </div>
+        ) : (
+          <EnhancedChatInput
+            onSend={handleSendMessage}
+            placeholder={replyingTo ? `Reply…` : `Message ${recipientName}…`}
+            disabled={isLoading}
+            userId={user?.id}
+            onTyping={sendTyping}
+            maxFileSize={200}
+            chatType="dm"
+          />
+        )}
       </div>
 
       {/* Edit Dialog */}
