@@ -318,8 +318,76 @@ export function UserProfileDialog({ open, onOpenChange, userId, userName }: User
               {/* Divider */}
               <div className="h-px bg-border" />
 
-              {/* About Section */}
+              {/* About / Bio Section */}
               <div className="space-y-4">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="text-xs font-semibold uppercase text-muted-foreground">About Me</h3>
+                    {isOwnProfile && !editingBio && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => { setEditBioValue(profile.bio || ''); setEditingBio(true); }}
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                  {editingBio ? (
+                    <div className="space-y-2">
+                      <Textarea
+                        value={editBioValue}
+                        onChange={(e) => setEditBioValue(e.target.value.slice(0, 300))}
+                        placeholder="Tell people about yourself..."
+                        className="text-sm resize-none min-h-[80px]"
+                        maxLength={300}
+                      />
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">{editBioValue.length}/300</span>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => setEditingBio(false)}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="default"
+                            size="icon"
+                            className="h-7 w-7"
+                            disabled={savingBio}
+                            onClick={async () => {
+                              if (!user) return;
+                              setSavingBio(true);
+                              const { error } = await supabase
+                                .from('profiles')
+                                .update({ bio: editBioValue.trim() || null })
+                                .eq('id', user.id);
+                              if (error) {
+                                toast({ title: 'Failed to save', variant: 'destructive' });
+                              } else {
+                                setProfile(prev => prev ? { ...prev, bio: editBioValue.trim() || null } : null);
+                                toast({ title: 'Bio updated' });
+                                setEditingBio(false);
+                              }
+                              setSavingBio(false);
+                            }}
+                          >
+                            {savingBio ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className={`text-sm ${profile.bio ? 'text-foreground' : 'text-muted-foreground italic'}`}>
+                      {profile.bio || (isOwnProfile ? 'Click the pencil to add a description...' : 'No description yet.')}
+                    </p>
+                  )}
+                </div>
+
                 {/* Roles */}
                 <div>
                   <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Roles</h3>
@@ -340,12 +408,6 @@ export function UserProfileDialog({ open, onOpenChange, userId, userName }: User
                 <div>
                   <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-1">Member Since</h3>
                   <p className="text-sm">{formatDate(profile.created_at)}</p>
-                </div>
-
-                {/* Note (Discord style) */}
-                <div>
-                  <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-1">Note</h3>
-                  <p className="text-sm text-muted-foreground italic">Click to add a note</p>
                 </div>
               </div>
             </div>
