@@ -11,7 +11,9 @@ const config: CapacitorConfig = {
   android: {
     allowMixedContent: true,
     captureInput: true,
-    webContentsDebuggingEnabled: false
+    webContentsDebuggingEnabled: false,
+    minWebViewVersion: '55.0.2883.91',
+    appendUserAgent: 'Askify-Android'
   },
   ios: {
     contentInset: 'automatic',
