@@ -37,6 +37,9 @@ const Install = lazy(() => import("./pages/Install"));
 const Reels = lazy(() => import("./pages/Reels"));
 const StaffMeeting = lazy(() => import("./pages/StaffMeeting"));
 const OfflineAI = lazy(() => import("./pages/OfflineAI"));
+const ReelViewer = lazy(() => import("./pages/ReelViewer"));
+const Cashout = lazy(() => import("./pages/Cashout"));
+const Shop = lazy(() => import("./pages/Shop"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -106,6 +109,9 @@ const App = () => {
                     <Route path="/reels" element={<Reels />} />
                     <Route path="/staff-meeting" element={<StaffMeeting />} />
                     <Route path="/offline-ai" element={<OfflineAI />} />
+                    <Route path="/reel-viewer" element={<ReelViewer />} />
+                    <Route path="/cashout" element={<Cashout />} />
+                    <Route path="/shop" element={<Shop />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </ChatProvider>
