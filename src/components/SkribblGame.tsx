@@ -57,7 +57,7 @@ export const SkribblGame = ({ roomId, onLeave }: { roomId: string; onLeave: () =
   const [guessOrder, setGuessOrder] = useState<string[]>([]);
   const [tool, setTool] = useState<'pen' | 'fill'>('pen');
   const [drawHistory, setDrawHistory] = useState<ImageData[]>([]);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Skribbl.io exact colors
   const colors = [

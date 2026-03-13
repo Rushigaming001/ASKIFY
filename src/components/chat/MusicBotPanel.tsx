@@ -89,7 +89,7 @@ export function MusicBotPanel({ isVisible, onClose, channelId }: MusicBotPanelPr
 
   // Update time periodically
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (isPlaying && ytPlayerRef.current) {
       interval = setInterval(() => {
         if (ytPlayerRef.current?.getCurrentTime) {

@@ -16,7 +16,7 @@ export function LiveVideoCall() {
   const [isManualMode, setIsManualMode] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const { toast } = useToast();
   const { restrictions } = useUserRestrictions();
 
