@@ -827,6 +827,8 @@ Generate the predicted paper now:`;
 
       setGeneratedTest(paper);
       setActiveTab('result');
+      addToHistory(paper, { title: 'Direct Predict', subject: directPredictSubject });
+      setLastAction(() => directPredict);
       await logActivity('direct_predict', { predictedSubject: directPredictSubject });
       toast({ title: 'Paper Predicted!', description: `AI predicted the most likely ${directPredictSubject} paper` });
     } catch (error: any) {
