@@ -167,7 +167,7 @@ export function TestGenerator() {
   const [predictorImageLoading, setPredictorImageLoading] = useState(false);
   const predictorFileRef = useRef<HTMLInputElement>(null);
   const [directPredictLoading, setDirectPredictLoading] = useState(false);
-  const [directPredictClass, setDirectPredictClass] = useState<'Class 9' | 'Class 10'>('Class 10');
+  const [directPredictClass] = useState<'Class 10'>('Class 10');
   const [directPredictSubject, setDirectPredictSubject] = useState('');
 
   // Check access on mount and refresh when settings change
