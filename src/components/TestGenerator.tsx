@@ -15,95 +15,114 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { PaperUpdatesChannel } from '@/components/PaperUpdatesChannel';
 
-// Class-wise curriculum with units/chapters
+// Class 10 Maharashtra State Board curriculum (merged: original + updated chapters)
 const CURRICULUM_BY_CLASS = {
-  'Class 9': {
-    'English': {
-      'Unit One': ['1.1: Life', '1.2: A Synopsis-The Swiss Family Robinson', '1.3: Have you ever seen...?', '1.4: Have you thought of the verb \'have\'', '1.5: The Necklace'],
-      'Unit Two': ['2.1: Invictus', '2.2: A True Story of Sea Turtles', '2.3: Somebody\'s Mother', '2.4: The Fall of Troy', '2.5: Autumn', '2.6: The Past in the Present'],
-      'Unit Three': ['3.1: Silver', '3.2: Reading Works of Art', '3.3: The Road Not Taken', '3.4: How the First Letter was Written'],
-      'Unit Four': ['4.1: Please Listen!', '4.2: The Storyteller', '4.3: Intellectual Rubbish', '4.4: My Financial Career', '4.5: Tansen'],
-      'Grammar & Writing Skills': ['Grammar', 'Writing Skills']
-    },
-    'Hindi (हिंदी)': {
-      'पहली इकाई': ['१: नदी की पुकार', '२: झुमका', '३: निज भाषा', '४: मान जा मेरे मन'],
-      'दूसरी इकाई': ['१: गागर में सागर', '२: मैं बरतन माँजूँगा', '३: ग्रामदेवता', '४: साहित्य की निष्कपट विधा है - डायरी']
-    },
-    'Sanskrit (संस्कृत)': {
-      'गद्यात्मकम्': ['संस्कृतम्', 'विद्यावन्तः', 'समयः'],
-      'पद्यात्मकम्': ['सुभाषिते खरे', 'कालमहत्त्वम्', 'किं कर्तव्यम्? किं न कर्तव्यम्?'],
-      'व्याकरणम्': ['वाक्य संरचना', 'विभक्तयः', 'सन्धयः']
-    },
-    'Marathi (मराठी)': {
-      'भाग – १': ['संतवाणीचे संदर्भ', 'दलितांचे आंबेडकर', 'कालचक्र'],
-      'भाग – २': ['ध्यानातले पहाट', 'ओळखीचा वेडाचा गाव', 'हरवलेलं मूल'],
-      'भाग – ३': ['उजाड उघडे माळरान', 'छपर', 'होमी'],
-      'भाग – ४': ['जीवनातला आनंद', 'उपयोजित लेखन']
-    },
-    'Math 1 - Algebra': {
-      'Unit 1': ['Sets', 'Real Numbers', 'Polynomials', 'Ratio and Proportion'],
-      'Unit 2': ['Linear Equations in Two Variables', 'Financial Planning', 'Statistics']
-    },
-    'Math 2 - Geometry': {
-      'Unit 1': ['Basic Concepts in Geometry', 'Parallel Lines', 'Triangles', 'Constructions of Triangles'],
-      'Unit 2': ['Quadrilaterals', 'Circle', 'Co-ordinate Geometry', 'Trigonometry', 'Surface Area and Volume']
-    },
-    'Science 1': {
-      'Unit 1': ['1: Laws of Motion', '2: Work and Energy', '3: Current Electricity', '4: Measurement of Matter', '5: Acids, Bases and Salts'],
-      'Unit 2': ['6: Classification of Plants', '7: Energy Flow in an Ecosystem', '8: Useful and Harmful Microbes', '9: Environmental Management', '10: Information Communication Technology']
-    },
-    'Science 2': {
-      'Unit 1': ['11: Reflection of Light', '12: Study of Sound', '13: Carbon: An important element'],
-      'Unit 2': ['14: Substances in Common Use', '15: Life Processes in Living Organisms', '16: Heredity and Variation', '17: Introduction to Biotechnology', '18: Observing Space: Telescopes']
-    },
-    'History & Political Science': {
-      'Unit 1': ['History: Sources of History', 'History: India : Events after 1960', 'Political Science: Post World War Political Developments'],
-      'Unit 2': ['History: Economic Development', 'History: Education', 'Political Science: India\'s Foreign Policy', 'Political Science: The United Nations']
-    },
-    'Geography': {
-      'Unit 1': ['1: Distributional Maps', '2: Endogenetic Movements', '3: Exogenetic Movements Part-1', '4: Exogenetic Movements Part-2', '5: Precipitation', '6: Properties of sea water'],
-      'Unit 2': ['7: International Date Line', '8: Introduction to Economics', '9: Trade', '10: Urbanisation', '11: Transport and Communication', '12: Tourism']
-    }
-  },
   'Class 10': {
     'English': {
-      'Unit 1': ['Where the Mind is Without Fear', 'The Thief\'s Story', 'Animals', 'The Twins'],
-      'Unit 2': ['The Night I Met Einstein', 'The Half-yearly Exam', 'Basketful of Moonlight', 'The Elevator'],
-      'Grammar & Writing Skills': ['Grammar', 'Writing Skills']
+      'Unit 1': [
+        '1.1 Where the Mind is Without Fear...',
+        "1.2 The Thief's Story",
+        '1.3 On Wings of Courage',
+        "1.4 All the World's a Stage",
+        '1.5 Joan of Arc',
+        '1.6 The Alchemy of Nature',
+        'The Twins',
+      ],
+      'Unit 2': [
+        '2.1 Animals',
+        '2.2 Three Questions',
+        '2.3 Connecting the Dots',
+        '2.4 The Pulley',
+        "2.5 Let's March",
+        '2.6 Science and Spirituality',
+        'The Half-yearly Exam',
+        'Basketful of Moonlight',
+        'The Elevator',
+      ],
+      'Unit 3': [
+        '3.1 Night of the Scorpion',
+        '3.2 The Night I Met Einstein',
+        '3.3 Stephen Hawking',
+        '3.4 The Will to Win',
+        '3.5 Unbeatable Super Mom – Mary Kom',
+        '3.6 The Concert',
+      ],
+      'Unit 4': [
+        '4.1 A Thing of Beauty is a Joy For Ever',
+        '4.2 The Luncheon',
+        '4.3 World Heritage',
+        '4.4 The Height of the Ridiculous',
+        '4.5 The Old Man and The Sea : Book Review',
+        '4.6 The Gift of the Magi',
+      ],
+      'Grammar & Writing Skills': ['Grammar', 'Writing Skills'],
     },
     'Marathi (मराठी)': {
       'भाग १': ['कविता विभाग', 'गद्य विभाग'],
-      'भाग २': ['उपयोजित लेखन', 'व्याकरण']
+      'भाग २': ['उपयोजित लेखन', 'व्याकरण'],
     },
     'Hindi (हिंदी)': {
       'इकाई 1': ['पद्यांश', 'गद्यांश'],
-      'इकाई 2': ['रचना विभाग', 'व्याकरण विभाग']
+      'इकाई 2': ['रचना विभाग', 'व्याकरण विभाग'],
     },
-    'Math 1 - Algebra': {
-      'Unit 1': ['Linear Equations', 'Quadratic Equations', 'Progressions'],
-      'Unit 2': ['Financial Planning', 'Probability', 'Statistics']
+    'Mathematics 1 (Algebra)': {
+      'All Chapters': [
+        '1. Linear Equations in Two Variables',
+        '2. Quadratic Equations',
+        '3. Arithmetic Progression',
+        '4. Financial Planning',
+        '5. Probability',
+        '6. Statistics',
+      ],
     },
-    'Math 2 - Geometry': {
-      'Unit 1': ['Similarity', 'Pythagoras Theorem', 'Coordinate Geometry'],
-      'Unit 2': ['Trigonometry', 'Mensuration', 'Circle']
+    'Mathematics 2 (Geometry)': {
+      'All Chapters': [
+        '1. Similarity',
+        '2. Pythagoras Theorem',
+        '3. Circle',
+        '4. Geometric Constructions',
+        '5. Co-ordinate Geometry',
+        '6. Trigonometry',
+        '7. Mensuration',
+      ],
     },
     'Science 1': {
-      'Unit 1': ['Gravitation', 'Periodic Classification', 'Chemical Reactions'],
-      'Unit 2': ['Effects of Electric Current', 'Heat', 'Light']
+      'All Chapters': [
+        '1. Gravitation',
+        '2. Periodic Classification of Elements',
+        '3. Chemical Reactions and Equations',
+        '4. Effects of Electric Current',
+        '5. Heat',
+        '6. Refraction of Light',
+        '7. Lenses',
+        '8. Metallurgy',
+        '9. Carbon Compounds',
+        '10. Space Missions',
+      ],
     },
     'Science 2': {
-      'Unit 1': ['Life Processes', 'Heredity', 'Environment Management'],
-      'Unit 2': ['Social Health', 'Disaster Management', 'Applied Biology']
+      'All Chapters': [
+        '1. Heredity and Evolution',
+        '2. Life Processes in Living Organisms Part 1',
+        '3. Life Processes in Living Organisms Part 2',
+        '4. Environmental Management',
+        '5. Towards Green Energy',
+        '6. Animal Classification',
+        '7. Introduction to Microbiology',
+        '8. Cell Biology and Biotechnology',
+        '9. Social Health',
+        '10. Disaster Management',
+      ],
     },
     'History & Political Science': {
       'Unit 1': ['Historiography', 'Applied History', 'Democracy'],
-      'Unit 2': ['India\'s Democratic Government', 'Political Parties', 'Social and Political Movements']
+      'Unit 2': ["India's Democratic Government", 'Political Parties', 'Social and Political Movements'],
     },
     'Geography': {
       'Unit 1': ['Field Visit', 'Location and Extent', 'Physiography and Drainage'],
-      'Unit 2': ['Natural Vegetation and Wildlife', 'Population', 'Economy and Occupation']
-    }
-  }
+      'Unit 2': ['Natural Vegetation and Wildlife', 'Population', 'Economy and Occupation'],
+    },
+  },
 } as const;
 
 const MARKS_OPTIONS = ['20', '40', '80', '100'];
