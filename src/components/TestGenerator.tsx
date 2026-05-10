@@ -170,6 +170,47 @@ export function TestGenerator() {
   const [directPredictClass] = useState<'Class 10'>('Class 10');
   const [directPredictSubject, setDirectPredictSubject] = useState('');
 
+  // History (localStorage)
+  type HistoryEntry = {
+    id: string;
+    title: string;
+    subject: string;
+    marks: string;
+    difficulty: string;
+    createdAt: number;
+    paper: string;
+  };
+  const HISTORY_KEY = 'askify-paper-history-v1';
+  const [history, setHistory] = useState<HistoryEntry[]>(() => {
+    try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; }
+  });
+  const persistHistory = (next: HistoryEntry[]) => {
+    setHistory(next);
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(next.slice(0, 50))); } catch { /* quota */ }
+  };
+  const addToHistory = (paper: string, meta: { title: string; subject: string }) => {
+    const entry: HistoryEntry = {
+      id: crypto.randomUUID(),
+      title: meta.title,
+      subject: meta.subject,
+      marks: totalMarks,
+      difficulty,
+      createdAt: Date.now(),
+      paper,
+    };
+    persistHistory([entry, ...history].slice(0, 50));
+  };
+  const clearHistory = () => persistHistory([]);
+  const deleteHistoryEntry = (id: string) => persistHistory(history.filter(h => h.id !== id));
+
+  // Last generation tracking for Regenerate
+  const [lastAction, setLastAction] = useState<null | (() => void)>(null);
+
+  // Check Paper feature
+  const [checkInput, setCheckInput] = useState('');
+  const [checkLoading, setCheckLoading] = useState(false);
+  const [checkResult, setCheckResult] = useState<string | null>(null);
+
   // Check access on mount and refresh when settings change
   useEffect(() => {
     checkAccess();
