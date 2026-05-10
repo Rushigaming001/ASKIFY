@@ -771,6 +771,8 @@ Generate the predicted paper now:`;
 
       setGeneratedTest(paper);
       setActiveTab('result');
+      addToHistory(paper, { title: 'Predicted', subject: subject || 'Predict' });
+      setLastAction(() => predictFromPapers);
       await logActivity('predict_from_papers');
       toast({ title: 'Paper Predicted!', description: 'AI analyzed patterns and generated a predicted paper' });
     } catch (error: any) {
