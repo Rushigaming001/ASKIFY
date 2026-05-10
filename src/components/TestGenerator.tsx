@@ -1424,11 +1424,19 @@ Be specific, cite question numbers, and keep it actionable.`;
           {generatedTest && (
             <>
               <div className="flex gap-2 flex-wrap">
-                <Button onClick={downloadPDF} className="flex-1">
+                <Button onClick={() => lastAction?.()} variant="secondary" disabled={!lastAction || loading || remakeLoading || exampleLoading || predictorLoading || directPredictLoading}>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Regenerate
+                </Button>
+                <Button onClick={copyPaper} variant="outline">
+                  <Copy className="mr-2 h-4 w-4" />
+                  Copy
+                </Button>
+                <Button onClick={downloadPDF} className="flex-1 min-w-[180px]">
                   <Download className="mr-2 h-4 w-4" />
                   Download HTML (Print as PDF)
                 </Button>
-                <Button onClick={downloadAsTxt} variant="outline" className="flex-1">
+                <Button onClick={downloadAsTxt} variant="outline" className="flex-1 min-w-[140px]">
                   <FileText className="mr-2 h-4 w-4" />
                   Download as Text
                 </Button>
@@ -1439,7 +1447,6 @@ Be specific, cite question numbers, and keep it actionable.`;
                   <ScrollArea className="h-[600px]">
                     <div className="font-serif text-sm leading-relaxed whitespace-pre-wrap">
                       {generatedTest.split('\n').map((line, i) => {
-                        // Convert **text** to bold and remove stars
                         const parts = line.split(/\*\*(.*?)\*\*/g);
                         return (
                           <div key={i} className={line === '' ? 'h-3' : ''}>
@@ -1455,6 +1462,102 @@ Be specific, cite question numbers, and keep it actionable.`;
               </Card>
             </>
           )}
+        </TabsContent>
+
+        {/* Check Paper Tab */}
+        <TabsContent value="check" className="space-y-4 mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ClipboardCheck className="h-5 w-5" />
+                Check / Review a Paper
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Paste any question paper and AI will review it for correctness, balance, difficulty, and suggest fixes.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Textarea
+                placeholder="Paste the full question paper here..."
+                value={checkInput}
+                onChange={(e) => setCheckInput(e.target.value)}
+                className="min-h-[260px] font-mono text-sm"
+              />
+              <Button onClick={checkPaper} disabled={checkLoading || !checkInput.trim()} className="w-full h-12" size="lg">
+                {checkLoading ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Reviewing Paper...</> : <><ClipboardCheck className="mr-2 h-5 w-5" /> Check Paper</>}
+              </Button>
+              {checkResult && (
+                <Card>
+                  <CardContent className="p-6">
+                    <ScrollArea className="h-[500px]">
+                      <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                        {checkResult.split('\n').map((line, i) => {
+                          const parts = line.split(/\*\*(.*?)\*\*/g);
+                          return (
+                            <div key={i} className={line === '' ? 'h-3' : ''}>
+                              {parts.map((part, j) =>
+                                j % 2 === 1 ? <strong key={j}>{part}</strong> : part
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* History Tab */}
+        <TabsContent value="history" className="space-y-4 mt-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex justify-between items-center">
+                <CardTitle className="flex items-center gap-2">
+                  <History className="h-5 w-5" />
+                  Generation History ({history.length})
+                </CardTitle>
+                {history.length > 0 && (
+                  <Button variant="ghost" size="sm" onClick={clearHistory}>
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Clear All
+                  </Button>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground">Stored locally on this device. Last 50 papers.</p>
+            </CardHeader>
+            <CardContent>
+              {history.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">No history yet. Generate a paper to see it here.</p>
+              ) : (
+                <ScrollArea className="h-[500px]">
+                  <div className="space-y-2">
+                    {history.map((h) => (
+                      <div key={h.id} className="flex items-center gap-2 p-3 border rounded-md hover:bg-accent/40">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm truncate">{h.title}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {h.subject} · {h.marks}M · {h.difficulty} · {new Date(h.createdAt).toLocaleString()}
+                          </div>
+                        </div>
+                        <Button size="sm" variant="outline" onClick={() => { setGeneratedTest(h.paper); setActiveTab('result'); }}>
+                          Open
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={async () => { await navigator.clipboard.writeText(h.paper); toast({ title: 'Copied!' }); }}>
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => deleteHistoryEntry(h.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Updates Tab */}
