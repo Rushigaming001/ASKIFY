@@ -848,6 +848,56 @@ Generate the predicted paper now:`;
 
   const directPredictSubjects = Object.keys(CURRICULUM_BY_CLASS[directPredictClass] as unknown as Record<string, unknown>);
 
+  // Check (review/grade) a question paper
+  const checkPaper = async () => {
+    if (!checkInput.trim()) {
+      toast({ title: 'Error', description: 'Paste the paper to check', variant: 'destructive' });
+      return;
+    }
+    setCheckLoading(true);
+    setCheckResult(null);
+    try {
+      const prompt = `You are a senior Maharashtra State Board examiner reviewing a Class 10 question paper.
+
+**PAPER TO REVIEW:**
+${checkInput}
+
+**TASK — produce a structured review with these sections:**
+1. ✅ Overall Quality Score (out of 10) with one-line verdict
+2. 📋 Marks Distribution Check — does it add up? Is the blueprint balanced?
+3. 🎯 Difficulty Balance — Easy/Medium/Hard mix; flag too-easy or unsolvable items
+4. 🧠 Conceptual Coverage — chapters covered vs. missed
+5. ⚠️ Errors & Issues — wrong facts, ambiguous wording, duplicates, formatting issues (list each with the question number)
+6. ✏️ Suggested Fixes — concrete rewrites for each flagged question
+7. 🌟 Strengths — what works well
+8. 📌 Final Recommendation — ready to use / needs minor edits / needs rework
+
+Be specific, cite question numbers, and keep it actionable.`;
+      const response = await supabase.functions.invoke('test-generator', { body: { prompt } });
+      if (response.error) throw response.error;
+      const review = response.data?.paper;
+      if (!review) throw new Error('No review generated');
+      setCheckResult(review);
+      await logActivity('check_paper');
+      toast({ title: 'Review Ready!', description: 'AI completed the paper review' });
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message || 'Failed to review paper', variant: 'destructive' });
+    } finally {
+      setCheckLoading(false);
+    }
+  };
+
+  // Copy paper to clipboard
+  const copyPaper = async () => {
+    if (!generatedTest) return;
+    try {
+      await navigator.clipboard.writeText(generatedTest);
+      toast({ title: 'Copied!', description: 'Paper copied to clipboard' });
+    } catch {
+      toast({ title: 'Copy failed', variant: 'destructive' });
+    }
+  };
+
   // Password gate UI
   if (accessChecking) {
     return (
