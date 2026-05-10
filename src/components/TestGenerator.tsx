@@ -906,21 +906,7 @@ Generate the predicted paper now:`;
               <CardContent className="space-y-4">
                 <div>
                   <Label>Class</Label>
-                  <Select value={selectedClass} onValueChange={(val) => {
-                    setSelectedClass(val as 'Class 9' | 'Class 10');
-                    setSubject('');
-                    setSelectedUnits([]);
-                    setSelectedUnitTerms({});
-                    setSelectedChapters([]);
-                  }}>
-                    <SelectTrigger className="mt-2">
-                      <SelectValue placeholder="Select Class" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Class 9">Class 9</SelectItem>
-                      <SelectItem value="Class 10">Class 10</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="mt-2 px-3 py-2 rounded-md border bg-muted/30 text-sm font-medium">Class 10 (Maharashtra State Board)</div>
                 </div>
 
                 <div>
