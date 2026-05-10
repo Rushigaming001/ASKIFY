@@ -488,6 +488,8 @@ Generate the complete question paper now:`;
 
       setGeneratedTest(paper);
       setActiveTab('result');
+      addToHistory(paper, { title: testTitle || `${subject} – ${totalMarks}M`, subject });
+      setLastAction(() => generateTest);
       await logActivity('generate', { chapters: selectedChapters });
       toast({ title: 'Test Generated!', description: `${difficulty} difficulty paper ready in seconds!` });
     } catch (error: any) {
