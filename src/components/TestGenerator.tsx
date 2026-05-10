@@ -621,6 +621,8 @@ Generate the new question paper now:`;
 
       setGeneratedTest(paper);
       setActiveTab('result');
+      addToHistory(paper, { title: 'From Example', subject: subject || 'Example' });
+      setLastAction(() => generateFromExample);
       await logActivity('example_paper');
       toast({ title: 'Paper Generated!', description: 'New paper created matching your example format!' });
     } catch (error: any) {
