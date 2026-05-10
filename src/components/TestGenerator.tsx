@@ -535,6 +535,8 @@ Generate the modified question paper now:`;
 
       setGeneratedTest(paper);
       setActiveTab('result');
+      addToHistory(paper, { title: 'Remake', subject: subject || 'Remake' });
+      setLastAction(() => remakeQuestions);
       await logActivity('remake');
       toast({ title: 'Questions Remade!', description: 'New version ready with different questions' });
     } catch (error: any) {
