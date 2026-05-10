@@ -982,6 +982,14 @@ Be specific, cite question numbers, and keep it actionable.`;
               <RefreshCw className="h-4 w-4 mr-1" />
               Remake
             </TabsTrigger>
+            <TabsTrigger value="check" className="text-xs sm:text-sm">
+              <ClipboardCheck className="h-4 w-4 mr-1" />
+              Check
+            </TabsTrigger>
+            <TabsTrigger value="history" className="text-xs sm:text-sm">
+              <History className="h-4 w-4 mr-1" />
+              History
+            </TabsTrigger>
             <TabsTrigger value="result" disabled={!generatedTest} className="text-xs sm:text-sm">
               <FileText className="h-4 w-4 mr-1" />
               Result
