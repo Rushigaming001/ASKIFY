@@ -131,7 +131,7 @@ const TERM_OPTIONS = ['Term 1', 'Term 2', 'Full Syllabus'];
 
 export function TestGenerator() {
   const { user } = useAuth();
-  const [selectedClass, setSelectedClass] = useState<'Class 9' | 'Class 10'>('Class 9');
+  const [selectedClass] = useState<'Class 10'>('Class 10');
   const [subject, setSubject] = useState<string>('');
   const [selectedUnits, setSelectedUnits] = useState<string[]>([]);
   const [selectedUnitTerms, setSelectedUnitTerms] = useState<Record<string, string>>({});
