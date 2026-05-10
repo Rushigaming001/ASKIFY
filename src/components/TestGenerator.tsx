@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, FileText, Download, Sparkles, GraduationCap, BookOpen, AlertCircle, Upload, RefreshCw, Camera, Lock, Brain, Zap, Megaphone } from 'lucide-react';
+import { Loader2, FileText, Download, Sparkles, GraduationCap, BookOpen, AlertCircle, Upload, RefreshCw, Camera, Lock, Brain, Zap, Megaphone, ClipboardCheck, History, Copy, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,95 +15,114 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { PaperUpdatesChannel } from '@/components/PaperUpdatesChannel';
 
-// Class-wise curriculum with units/chapters
+// Class 10 Maharashtra State Board curriculum (merged: original + updated chapters)
 const CURRICULUM_BY_CLASS = {
-  'Class 9': {
-    'English': {
-      'Unit One': ['1.1: Life', '1.2: A Synopsis-The Swiss Family Robinson', '1.3: Have you ever seen...?', '1.4: Have you thought of the verb \'have\'', '1.5: The Necklace'],
-      'Unit Two': ['2.1: Invictus', '2.2: A True Story of Sea Turtles', '2.3: Somebody\'s Mother', '2.4: The Fall of Troy', '2.5: Autumn', '2.6: The Past in the Present'],
-      'Unit Three': ['3.1: Silver', '3.2: Reading Works of Art', '3.3: The Road Not Taken', '3.4: How the First Letter was Written'],
-      'Unit Four': ['4.1: Please Listen!', '4.2: The Storyteller', '4.3: Intellectual Rubbish', '4.4: My Financial Career', '4.5: Tansen'],
-      'Grammar & Writing Skills': ['Grammar', 'Writing Skills']
-    },
-    'Hindi (हिंदी)': {
-      'पहली इकाई': ['१: नदी की पुकार', '२: झुमका', '३: निज भाषा', '४: मान जा मेरे मन'],
-      'दूसरी इकाई': ['१: गागर में सागर', '२: मैं बरतन माँजूँगा', '३: ग्रामदेवता', '४: साहित्य की निष्कपट विधा है - डायरी']
-    },
-    'Sanskrit (संस्कृत)': {
-      'गद्यात्मकम्': ['संस्कृतम्', 'विद्यावन्तः', 'समयः'],
-      'पद्यात्मकम्': ['सुभाषिते खरे', 'कालमहत्त्वम्', 'किं कर्तव्यम्? किं न कर्तव्यम्?'],
-      'व्याकरणम्': ['वाक्य संरचना', 'विभक्तयः', 'सन्धयः']
-    },
-    'Marathi (मराठी)': {
-      'भाग – १': ['संतवाणीचे संदर्भ', 'दलितांचे आंबेडकर', 'कालचक्र'],
-      'भाग – २': ['ध्यानातले पहाट', 'ओळखीचा वेडाचा गाव', 'हरवलेलं मूल'],
-      'भाग – ३': ['उजाड उघडे माळरान', 'छपर', 'होमी'],
-      'भाग – ४': ['जीवनातला आनंद', 'उपयोजित लेखन']
-    },
-    'Math 1 - Algebra': {
-      'Unit 1': ['Sets', 'Real Numbers', 'Polynomials', 'Ratio and Proportion'],
-      'Unit 2': ['Linear Equations in Two Variables', 'Financial Planning', 'Statistics']
-    },
-    'Math 2 - Geometry': {
-      'Unit 1': ['Basic Concepts in Geometry', 'Parallel Lines', 'Triangles', 'Constructions of Triangles'],
-      'Unit 2': ['Quadrilaterals', 'Circle', 'Co-ordinate Geometry', 'Trigonometry', 'Surface Area and Volume']
-    },
-    'Science 1': {
-      'Unit 1': ['1: Laws of Motion', '2: Work and Energy', '3: Current Electricity', '4: Measurement of Matter', '5: Acids, Bases and Salts'],
-      'Unit 2': ['6: Classification of Plants', '7: Energy Flow in an Ecosystem', '8: Useful and Harmful Microbes', '9: Environmental Management', '10: Information Communication Technology']
-    },
-    'Science 2': {
-      'Unit 1': ['11: Reflection of Light', '12: Study of Sound', '13: Carbon: An important element'],
-      'Unit 2': ['14: Substances in Common Use', '15: Life Processes in Living Organisms', '16: Heredity and Variation', '17: Introduction to Biotechnology', '18: Observing Space: Telescopes']
-    },
-    'History & Political Science': {
-      'Unit 1': ['History: Sources of History', 'History: India : Events after 1960', 'Political Science: Post World War Political Developments'],
-      'Unit 2': ['History: Economic Development', 'History: Education', 'Political Science: India\'s Foreign Policy', 'Political Science: The United Nations']
-    },
-    'Geography': {
-      'Unit 1': ['1: Distributional Maps', '2: Endogenetic Movements', '3: Exogenetic Movements Part-1', '4: Exogenetic Movements Part-2', '5: Precipitation', '6: Properties of sea water'],
-      'Unit 2': ['7: International Date Line', '8: Introduction to Economics', '9: Trade', '10: Urbanisation', '11: Transport and Communication', '12: Tourism']
-    }
-  },
   'Class 10': {
     'English': {
-      'Unit 1': ['Where the Mind is Without Fear', 'The Thief\'s Story', 'Animals', 'The Twins'],
-      'Unit 2': ['The Night I Met Einstein', 'The Half-yearly Exam', 'Basketful of Moonlight', 'The Elevator'],
-      'Grammar & Writing Skills': ['Grammar', 'Writing Skills']
+      'Unit 1': [
+        '1.1 Where the Mind is Without Fear...',
+        "1.2 The Thief's Story",
+        '1.3 On Wings of Courage',
+        "1.4 All the World's a Stage",
+        '1.5 Joan of Arc',
+        '1.6 The Alchemy of Nature',
+        'The Twins',
+      ],
+      'Unit 2': [
+        '2.1 Animals',
+        '2.2 Three Questions',
+        '2.3 Connecting the Dots',
+        '2.4 The Pulley',
+        "2.5 Let's March",
+        '2.6 Science and Spirituality',
+        'The Half-yearly Exam',
+        'Basketful of Moonlight',
+        'The Elevator',
+      ],
+      'Unit 3': [
+        '3.1 Night of the Scorpion',
+        '3.2 The Night I Met Einstein',
+        '3.3 Stephen Hawking',
+        '3.4 The Will to Win',
+        '3.5 Unbeatable Super Mom – Mary Kom',
+        '3.6 The Concert',
+      ],
+      'Unit 4': [
+        '4.1 A Thing of Beauty is a Joy For Ever',
+        '4.2 The Luncheon',
+        '4.3 World Heritage',
+        '4.4 The Height of the Ridiculous',
+        '4.5 The Old Man and The Sea : Book Review',
+        '4.6 The Gift of the Magi',
+      ],
+      'Grammar & Writing Skills': ['Grammar', 'Writing Skills'],
     },
     'Marathi (मराठी)': {
       'भाग १': ['कविता विभाग', 'गद्य विभाग'],
-      'भाग २': ['उपयोजित लेखन', 'व्याकरण']
+      'भाग २': ['उपयोजित लेखन', 'व्याकरण'],
     },
     'Hindi (हिंदी)': {
       'इकाई 1': ['पद्यांश', 'गद्यांश'],
-      'इकाई 2': ['रचना विभाग', 'व्याकरण विभाग']
+      'इकाई 2': ['रचना विभाग', 'व्याकरण विभाग'],
     },
-    'Math 1 - Algebra': {
-      'Unit 1': ['Linear Equations', 'Quadratic Equations', 'Progressions'],
-      'Unit 2': ['Financial Planning', 'Probability', 'Statistics']
+    'Mathematics 1 (Algebra)': {
+      'All Chapters': [
+        '1. Linear Equations in Two Variables',
+        '2. Quadratic Equations',
+        '3. Arithmetic Progression',
+        '4. Financial Planning',
+        '5. Probability',
+        '6. Statistics',
+      ],
     },
-    'Math 2 - Geometry': {
-      'Unit 1': ['Similarity', 'Pythagoras Theorem', 'Coordinate Geometry'],
-      'Unit 2': ['Trigonometry', 'Mensuration', 'Circle']
+    'Mathematics 2 (Geometry)': {
+      'All Chapters': [
+        '1. Similarity',
+        '2. Pythagoras Theorem',
+        '3. Circle',
+        '4. Geometric Constructions',
+        '5. Co-ordinate Geometry',
+        '6. Trigonometry',
+        '7. Mensuration',
+      ],
     },
     'Science 1': {
-      'Unit 1': ['Gravitation', 'Periodic Classification', 'Chemical Reactions'],
-      'Unit 2': ['Effects of Electric Current', 'Heat', 'Light']
+      'All Chapters': [
+        '1. Gravitation',
+        '2. Periodic Classification of Elements',
+        '3. Chemical Reactions and Equations',
+        '4. Effects of Electric Current',
+        '5. Heat',
+        '6. Refraction of Light',
+        '7. Lenses',
+        '8. Metallurgy',
+        '9. Carbon Compounds',
+        '10. Space Missions',
+      ],
     },
     'Science 2': {
-      'Unit 1': ['Life Processes', 'Heredity', 'Environment Management'],
-      'Unit 2': ['Social Health', 'Disaster Management', 'Applied Biology']
+      'All Chapters': [
+        '1. Heredity and Evolution',
+        '2. Life Processes in Living Organisms Part 1',
+        '3. Life Processes in Living Organisms Part 2',
+        '4. Environmental Management',
+        '5. Towards Green Energy',
+        '6. Animal Classification',
+        '7. Introduction to Microbiology',
+        '8. Cell Biology and Biotechnology',
+        '9. Social Health',
+        '10. Disaster Management',
+      ],
     },
     'History & Political Science': {
       'Unit 1': ['Historiography', 'Applied History', 'Democracy'],
-      'Unit 2': ['India\'s Democratic Government', 'Political Parties', 'Social and Political Movements']
+      'Unit 2': ["India's Democratic Government", 'Political Parties', 'Social and Political Movements'],
     },
     'Geography': {
       'Unit 1': ['Field Visit', 'Location and Extent', 'Physiography and Drainage'],
-      'Unit 2': ['Natural Vegetation and Wildlife', 'Population', 'Economy and Occupation']
-    }
-  }
+      'Unit 2': ['Natural Vegetation and Wildlife', 'Population', 'Economy and Occupation'],
+    },
+  },
 } as const;
 
 const MARKS_OPTIONS = ['20', '40', '80', '100'];
@@ -112,7 +131,7 @@ const TERM_OPTIONS = ['Term 1', 'Term 2', 'Full Syllabus'];
 
 export function TestGenerator() {
   const { user } = useAuth();
-  const [selectedClass, setSelectedClass] = useState<'Class 9' | 'Class 10'>('Class 9');
+  const [selectedClass] = useState<'Class 10'>('Class 10');
   const [subject, setSubject] = useState<string>('');
   const [selectedUnits, setSelectedUnits] = useState<string[]>([]);
   const [selectedUnitTerms, setSelectedUnitTerms] = useState<Record<string, string>>({});
@@ -148,8 +167,49 @@ export function TestGenerator() {
   const [predictorImageLoading, setPredictorImageLoading] = useState(false);
   const predictorFileRef = useRef<HTMLInputElement>(null);
   const [directPredictLoading, setDirectPredictLoading] = useState(false);
-  const [directPredictClass, setDirectPredictClass] = useState<'Class 9' | 'Class 10'>('Class 10');
+  const [directPredictClass] = useState<'Class 10'>('Class 10');
   const [directPredictSubject, setDirectPredictSubject] = useState('');
+
+  // History (localStorage)
+  type HistoryEntry = {
+    id: string;
+    title: string;
+    subject: string;
+    marks: string;
+    difficulty: string;
+    createdAt: number;
+    paper: string;
+  };
+  const HISTORY_KEY = 'askify-paper-history-v1';
+  const [history, setHistory] = useState<HistoryEntry[]>(() => {
+    try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; }
+  });
+  const persistHistory = (next: HistoryEntry[]) => {
+    setHistory(next);
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(next.slice(0, 50))); } catch { /* quota */ }
+  };
+  const addToHistory = (paper: string, meta: { title: string; subject: string }) => {
+    const entry: HistoryEntry = {
+      id: crypto.randomUUID(),
+      title: meta.title,
+      subject: meta.subject,
+      marks: totalMarks,
+      difficulty,
+      createdAt: Date.now(),
+      paper,
+    };
+    persistHistory([entry, ...history].slice(0, 50));
+  };
+  const clearHistory = () => persistHistory([]);
+  const deleteHistoryEntry = (id: string) => persistHistory(history.filter(h => h.id !== id));
+
+  // Last generation tracking for Regenerate
+  const [lastAction, setLastAction] = useState<null | (() => void)>(null);
+
+  // Check Paper feature
+  const [checkInput, setCheckInput] = useState('');
+  const [checkLoading, setCheckLoading] = useState(false);
+  const [checkResult, setCheckResult] = useState<string | null>(null);
 
   // Check access on mount and refresh when settings change
   useEffect(() => {
@@ -428,6 +488,8 @@ Generate the complete question paper now:`;
 
       setGeneratedTest(paper);
       setActiveTab('result');
+      addToHistory(paper, { title: testTitle || `${subject} – ${totalMarks}M`, subject });
+      setLastAction(() => generateTest);
       await logActivity('generate', { chapters: selectedChapters });
       toast({ title: 'Test Generated!', description: `${difficulty} difficulty paper ready in seconds!` });
     } catch (error: any) {
@@ -473,6 +535,8 @@ Generate the modified question paper now:`;
 
       setGeneratedTest(paper);
       setActiveTab('result');
+      addToHistory(paper, { title: 'Remake', subject: subject || 'Remake' });
+      setLastAction(() => remakeQuestions);
       await logActivity('remake');
       toast({ title: 'Questions Remade!', description: 'New version ready with different questions' });
     } catch (error: any) {
@@ -557,6 +621,8 @@ Generate the new question paper now:`;
 
       setGeneratedTest(paper);
       setActiveTab('result');
+      addToHistory(paper, { title: 'From Example', subject: subject || 'Example' });
+      setLastAction(() => generateFromExample);
       await logActivity('example_paper');
       toast({ title: 'Paper Generated!', description: 'New paper created matching your example format!' });
     } catch (error: any) {
@@ -705,6 +771,8 @@ Generate the predicted paper now:`;
 
       setGeneratedTest(paper);
       setActiveTab('result');
+      addToHistory(paper, { title: 'Predicted', subject: subject || 'Predict' });
+      setLastAction(() => predictFromPapers);
       await logActivity('predict_from_papers');
       toast({ title: 'Paper Predicted!', description: 'AI analyzed patterns and generated a predicted paper' });
     } catch (error: any) {
@@ -759,6 +827,8 @@ Generate the predicted paper now:`;
 
       setGeneratedTest(paper);
       setActiveTab('result');
+      addToHistory(paper, { title: 'Direct Predict', subject: directPredictSubject });
+      setLastAction(() => directPredict);
       await logActivity('direct_predict', { predictedSubject: directPredictSubject });
       toast({ title: 'Paper Predicted!', description: `AI predicted the most likely ${directPredictSubject} paper` });
     } catch (error: any) {
@@ -777,6 +847,56 @@ Generate the predicted paper now:`;
   };
 
   const directPredictSubjects = Object.keys(CURRICULUM_BY_CLASS[directPredictClass] as unknown as Record<string, unknown>);
+
+  // Check (review/grade) a question paper
+  const checkPaper = async () => {
+    if (!checkInput.trim()) {
+      toast({ title: 'Error', description: 'Paste the paper to check', variant: 'destructive' });
+      return;
+    }
+    setCheckLoading(true);
+    setCheckResult(null);
+    try {
+      const prompt = `You are a senior Maharashtra State Board examiner reviewing a Class 10 question paper.
+
+**PAPER TO REVIEW:**
+${checkInput}
+
+**TASK — produce a structured review with these sections:**
+1. ✅ Overall Quality Score (out of 10) with one-line verdict
+2. 📋 Marks Distribution Check — does it add up? Is the blueprint balanced?
+3. 🎯 Difficulty Balance — Easy/Medium/Hard mix; flag too-easy or unsolvable items
+4. 🧠 Conceptual Coverage — chapters covered vs. missed
+5. ⚠️ Errors & Issues — wrong facts, ambiguous wording, duplicates, formatting issues (list each with the question number)
+6. ✏️ Suggested Fixes — concrete rewrites for each flagged question
+7. 🌟 Strengths — what works well
+8. 📌 Final Recommendation — ready to use / needs minor edits / needs rework
+
+Be specific, cite question numbers, and keep it actionable.`;
+      const response = await supabase.functions.invoke('test-generator', { body: { prompt } });
+      if (response.error) throw response.error;
+      const review = response.data?.paper;
+      if (!review) throw new Error('No review generated');
+      setCheckResult(review);
+      await logActivity('check_paper');
+      toast({ title: 'Review Ready!', description: 'AI completed the paper review' });
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message || 'Failed to review paper', variant: 'destructive' });
+    } finally {
+      setCheckLoading(false);
+    }
+  };
+
+  // Copy paper to clipboard
+  const copyPaper = async () => {
+    if (!generatedTest) return;
+    try {
+      await navigator.clipboard.writeText(generatedTest);
+      toast({ title: 'Copied!', description: 'Paper copied to clipboard' });
+    } catch {
+      toast({ title: 'Copy failed', variant: 'destructive' });
+    }
+  };
 
   // Password gate UI
   if (accessChecking) {
@@ -862,6 +982,14 @@ Generate the predicted paper now:`;
               <RefreshCw className="h-4 w-4 mr-1" />
               Remake
             </TabsTrigger>
+            <TabsTrigger value="check" className="text-xs sm:text-sm">
+              <ClipboardCheck className="h-4 w-4 mr-1" />
+              Check
+            </TabsTrigger>
+            <TabsTrigger value="history" className="text-xs sm:text-sm">
+              <History className="h-4 w-4 mr-1" />
+              History
+            </TabsTrigger>
             <TabsTrigger value="result" disabled={!generatedTest} className="text-xs sm:text-sm">
               <FileText className="h-4 w-4 mr-1" />
               Result
@@ -887,21 +1015,7 @@ Generate the predicted paper now:`;
               <CardContent className="space-y-4">
                 <div>
                   <Label>Class</Label>
-                  <Select value={selectedClass} onValueChange={(val) => {
-                    setSelectedClass(val as 'Class 9' | 'Class 10');
-                    setSubject('');
-                    setSelectedUnits([]);
-                    setSelectedUnitTerms({});
-                    setSelectedChapters([]);
-                  }}>
-                    <SelectTrigger className="mt-2">
-                      <SelectValue placeholder="Select Class" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Class 9">Class 9</SelectItem>
-                      <SelectItem value="Class 10">Class 10</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="mt-2 px-3 py-2 rounded-md border bg-muted/30 text-sm font-medium">Class 10 (Maharashtra State Board)</div>
                 </div>
 
                 <div>
@@ -1180,13 +1294,7 @@ Generate the predicted paper now:`;
             <CardContent className="space-y-4">
               <div>
                 <Label>Class</Label>
-                <Select value={directPredictClass} onValueChange={(v) => { setDirectPredictClass(v as any); setDirectPredictSubject(''); }}>
-                  <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Class 9">Class 9</SelectItem>
-                    <SelectItem value="Class 10">Class 10</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="mt-2 px-3 py-2 rounded-md border bg-muted/30 text-sm font-medium">Class 10 (Maharashtra State Board)</div>
               </div>
               <div>
                 <Label>Subject</Label>
@@ -1316,11 +1424,19 @@ Generate the predicted paper now:`;
           {generatedTest && (
             <>
               <div className="flex gap-2 flex-wrap">
-                <Button onClick={downloadPDF} className="flex-1">
+                <Button onClick={() => lastAction?.()} variant="secondary" disabled={!lastAction || loading || remakeLoading || exampleLoading || predictorLoading || directPredictLoading}>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Regenerate
+                </Button>
+                <Button onClick={copyPaper} variant="outline">
+                  <Copy className="mr-2 h-4 w-4" />
+                  Copy
+                </Button>
+                <Button onClick={downloadPDF} className="flex-1 min-w-[180px]">
                   <Download className="mr-2 h-4 w-4" />
                   Download HTML (Print as PDF)
                 </Button>
-                <Button onClick={downloadAsTxt} variant="outline" className="flex-1">
+                <Button onClick={downloadAsTxt} variant="outline" className="flex-1 min-w-[140px]">
                   <FileText className="mr-2 h-4 w-4" />
                   Download as Text
                 </Button>
@@ -1331,7 +1447,6 @@ Generate the predicted paper now:`;
                   <ScrollArea className="h-[600px]">
                     <div className="font-serif text-sm leading-relaxed whitespace-pre-wrap">
                       {generatedTest.split('\n').map((line, i) => {
-                        // Convert **text** to bold and remove stars
                         const parts = line.split(/\*\*(.*?)\*\*/g);
                         return (
                           <div key={i} className={line === '' ? 'h-3' : ''}>
@@ -1347,6 +1462,102 @@ Generate the predicted paper now:`;
               </Card>
             </>
           )}
+        </TabsContent>
+
+        {/* Check Paper Tab */}
+        <TabsContent value="check" className="space-y-4 mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ClipboardCheck className="h-5 w-5" />
+                Check / Review a Paper
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Paste any question paper and AI will review it for correctness, balance, difficulty, and suggest fixes.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Textarea
+                placeholder="Paste the full question paper here..."
+                value={checkInput}
+                onChange={(e) => setCheckInput(e.target.value)}
+                className="min-h-[260px] font-mono text-sm"
+              />
+              <Button onClick={checkPaper} disabled={checkLoading || !checkInput.trim()} className="w-full h-12" size="lg">
+                {checkLoading ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Reviewing Paper...</> : <><ClipboardCheck className="mr-2 h-5 w-5" /> Check Paper</>}
+              </Button>
+              {checkResult && (
+                <Card>
+                  <CardContent className="p-6">
+                    <ScrollArea className="h-[500px]">
+                      <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                        {checkResult.split('\n').map((line, i) => {
+                          const parts = line.split(/\*\*(.*?)\*\*/g);
+                          return (
+                            <div key={i} className={line === '' ? 'h-3' : ''}>
+                              {parts.map((part, j) =>
+                                j % 2 === 1 ? <strong key={j}>{part}</strong> : part
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* History Tab */}
+        <TabsContent value="history" className="space-y-4 mt-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex justify-between items-center">
+                <CardTitle className="flex items-center gap-2">
+                  <History className="h-5 w-5" />
+                  Generation History ({history.length})
+                </CardTitle>
+                {history.length > 0 && (
+                  <Button variant="ghost" size="sm" onClick={clearHistory}>
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Clear All
+                  </Button>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground">Stored locally on this device. Last 50 papers.</p>
+            </CardHeader>
+            <CardContent>
+              {history.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">No history yet. Generate a paper to see it here.</p>
+              ) : (
+                <ScrollArea className="h-[500px]">
+                  <div className="space-y-2">
+                    {history.map((h) => (
+                      <div key={h.id} className="flex items-center gap-2 p-3 border rounded-md hover:bg-accent/40">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm truncate">{h.title}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {h.subject} · {h.marks}M · {h.difficulty} · {new Date(h.createdAt).toLocaleString()}
+                          </div>
+                        </div>
+                        <Button size="sm" variant="outline" onClick={() => { setGeneratedTest(h.paper); setActiveTab('result'); }}>
+                          Open
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={async () => { await navigator.clipboard.writeText(h.paper); toast({ title: 'Copied!' }); }}>
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => deleteHistoryEntry(h.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Updates Tab */}
