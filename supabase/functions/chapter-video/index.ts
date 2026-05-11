@@ -1,4 +1,4 @@
-import { serve } from "jsr:@std/http/server"
+// using Deno.serve
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 import { encodeBase64 as base64Encode } from "jsr:@std/encoding/base64";
 import { checkDDoS } from "../_shared/ddos.ts";
@@ -8,7 +8,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
