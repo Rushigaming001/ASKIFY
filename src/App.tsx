@@ -40,6 +40,7 @@ const OfflineAI = lazy(() => import("./pages/OfflineAI"));
 const ReelViewer = lazy(() => import("./pages/ReelViewer"));
 const Cashout = lazy(() => import("./pages/Cashout"));
 const Shop = lazy(() => import("./pages/Shop"));
+const PaperApp = lazy(() => import("./pages/PaperApp"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -61,13 +62,18 @@ const PageLoader = () => (
 const App = () => {
   const hostname = window.location.hostname;
   const isAQISubdomain = hostname.startsWith('aqi.') && !hostname.includes('lovableproject.com') && !hostname.includes('localhost');
-  
+  const isPaperAppPath = typeof window !== 'undefined' && window.location.pathname.startsWith('/paper-app');
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <BrowserRouter>
           <Suspense fallback={<PageLoader />}>
-            {isAQISubdomain ? (
+            {isPaperAppPath ? (
+              <Routes>
+                <Route path="*" element={<PaperApp />} />
+              </Routes>
+            ) : isAQISubdomain ? (
               <>
                 <Toaster />
                 <Sonner />

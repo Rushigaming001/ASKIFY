@@ -1,6 +1,5 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "jsr:@std/http/server";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.84.0';
 import { checkDDoS } from "../_shared/ddos.ts";
 
 const corsHeaders = {
@@ -203,13 +202,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    // Log usage
-    await supabase.from('usage_logs').insert({
-      user_id: user.id,
-      model_id: 'test-generator',
-      mode: 'test-generation'
-    });
 
     return new Response(JSON.stringify({ paper: result }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
