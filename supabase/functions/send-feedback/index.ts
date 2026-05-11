@@ -1,6 +1,8 @@
 // using Deno.serve
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkDDoS } from "../_shared/ddos.ts";
+import { errorResponse, installGlobalErrorHandlers } from "../_shared/errors.ts";
+installGlobalErrorHandlers("send-feedback");
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -61,10 +63,6 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Feedback error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return errorResponse(error, { fn: "send-feedback", corsHeaders });
   }
 });

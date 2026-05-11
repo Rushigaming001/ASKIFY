@@ -2,6 +2,8 @@
 import { encodeBase64 as base64Encode } from "jsr:@std/encoding/base64";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { checkDDoS } from "../_shared/ddos.ts";
+import { errorResponse, installGlobalErrorHandlers } from "../_shared/errors.ts";
+installGlobalErrorHandlers("minecraft-plugin");
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -291,16 +293,7 @@ Return ONLY valid JSON with mainClass, pluginYml, and packageName fields. No mar
       }
     );
   } catch (error) {
-    console.error('Error in minecraft-plugin function:', error);
-    return new Response(
-      JSON.stringify({ 
-        error: 'An error occurred generating the plugin. Please try again.' 
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 
-      }
-    );
+    return errorResponse(error, { fn: "minecraft-plugin", corsHeaders });
   }
 });
 

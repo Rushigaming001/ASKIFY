@@ -2,6 +2,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 import { encodeBase64 as base64Encode } from "jsr:@std/encoding/base64";
 import { checkDDoS } from "../_shared/ddos.ts";
+import { errorResponse, installGlobalErrorHandlers } from "../_shared/errors.ts";
+installGlobalErrorHandlers("chapter-video");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -288,10 +290,6 @@ Guidelines:
     });
 
   } catch (error) {
-    console.error("Error in chapter-video function:", error)
-    return new Response(JSON.stringify({ error: "An error occurred processing your request. Please try again." }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
-    })
+    return errorResponse(error, { fn: "chapter-video", corsHeaders });
   }
 })
