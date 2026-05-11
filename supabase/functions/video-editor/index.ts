@@ -1,6 +1,8 @@
 // using Deno.serve
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { checkDDoS } from "../_shared/ddos.ts";
+import { errorResponse, installGlobalErrorHandlers } from "../_shared/errors.ts";
+installGlobalErrorHandlers("video-editor");
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -101,18 +103,8 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );
-  } catch (error: any) {
-    console.error('Error in video editor:', error);
-    return new Response(
-      JSON.stringify({ 
-        error: 'Processing failed',
-        details: error.message 
-      }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
+  } catch (error) {
+    return errorResponse(error, { fn: "video-editor", corsHeaders, userMessage: "Processing failed" });
   }
 });
 

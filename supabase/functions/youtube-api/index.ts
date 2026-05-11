@@ -2,6 +2,8 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 // using Deno.serve
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { checkDDoS } from "../_shared/ddos.ts";
+import { errorResponse, installGlobalErrorHandlers } from "../_shared/errors.ts";
+installGlobalErrorHandlers("youtube-api");
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -126,16 +128,8 @@ Deno.serve(async (req) => {
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('YouTube API error:', errorMessage);
-    return new Response(JSON.stringify({ 
-      success: false, 
-      error: errorMessage 
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+  } catch (error) {
+    return errorResponse(error, { fn: "youtube-api", corsHeaders });
   }
 });
 
