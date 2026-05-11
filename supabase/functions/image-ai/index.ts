@@ -1,4 +1,4 @@
-import { serve } from "jsr:@std/http/server";
+// using Deno.serve
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
@@ -28,7 +28,7 @@ function checkDDoS(req: Request): Response | null {
   return null;
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
