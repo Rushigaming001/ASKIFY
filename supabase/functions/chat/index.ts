@@ -1,5 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 // using Deno.serve
+import { errorResponse, installGlobalErrorHandlers } from "../_shared/errors.ts";
+installGlobalErrorHandlers("chat");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -571,13 +573,6 @@ Format: Use numbered steps. Be precise. Avoid logical fallacies. Show your work 
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Chat error:", error);
-    return new Response(
-      JSON.stringify({ error: "An error occurred processing your request. Please try again." }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
+    return errorResponse(error, { fn: "chat", corsHeaders });
   }
 });

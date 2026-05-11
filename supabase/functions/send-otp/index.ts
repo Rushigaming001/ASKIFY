@@ -1,6 +1,8 @@
 // using Deno.serve
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkDDoS } from "../_shared/ddos.ts";
+import { errorResponse, installGlobalErrorHandlers } from "../_shared/errors.ts";
+installGlobalErrorHandlers("send-otp");
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -275,9 +277,6 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('OTP error:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    return errorResponse(error, { fn: "send-otp", corsHeaders });
   }
 });

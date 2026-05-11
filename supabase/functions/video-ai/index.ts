@@ -1,6 +1,8 @@
 // using Deno.serve
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 import { checkDDoS } from "../_shared/ddos.ts";
+import { errorResponse, installGlobalErrorHandlers } from "../_shared/errors.ts";
+installGlobalErrorHandlers("video-ai");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -183,10 +185,6 @@ Deno.serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    console.error("Error in video-ai function:", error)
-    return new Response(JSON.stringify({ error: "An error occurred processing your request. Please try again." }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
-    })
+    return errorResponse(error, { fn: "video-ai", corsHeaders });
   }
 })

@@ -1,5 +1,7 @@
 // using Deno.serve
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.84.0';
+import { errorResponse, installGlobalErrorHandlers } from "../_shared/errors.ts";
+installGlobalErrorHandlers("askify-chat");
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -136,10 +138,6 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error in askify-chat function:', error);
-    return new Response(
-      JSON.stringify({ error: 'An error occurred processing your request. Please try again.' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return errorResponse(error, { fn: "askify-chat", corsHeaders });
   }
 });
