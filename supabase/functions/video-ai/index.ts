@@ -1,4 +1,4 @@
-import { serve } from "jsr:@std/http/server"
+// using Deno.serve
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 import { checkDDoS } from "../_shared/ddos.ts";
 
