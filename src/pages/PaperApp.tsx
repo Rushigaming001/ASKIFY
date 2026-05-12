@@ -607,17 +607,21 @@ function SamplesTab() {
   const [subject, setSubject] = useState<string>(SUBJECTS[0]);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [images, setImages] = useState<SampleImageRef[]>([]);
 
   const persist = (next: SamplePapersMap) => { setMap(next); saveSamplePapers(next); };
 
   const add = () => {
-    if (!title.trim() || !content.trim()) {
-      toast({ title: 'Title and content required', variant: 'destructive' });
+    if (!title.trim() || (!content.trim() && images.length === 0)) {
+      toast({ title: 'Title plus content or at least one image required', variant: 'destructive' });
       return;
     }
-    const next: SamplePapersMap = { ...map, [subject]: [...(map[subject] ?? []), { title: title.trim(), content: content.trim() }] };
+    const next: SamplePapersMap = {
+      ...map,
+      [subject]: [...(map[subject] ?? []), { title: title.trim(), content: content.trim(), images: images.length ? images : undefined }],
+    };
     persist(next);
-    setTitle(''); setContent('');
+    setTitle(''); setContent(''); setImages([]);
     toast({ title: 'Sample paper saved', description: `Will be used as reference for ${subject}.` });
   };
 
@@ -627,11 +631,36 @@ function SamplesTab() {
     persist(next);
   };
 
-  const onFile = async (f: File) => {
+  const onTextFile = async (f: File) => {
     const text = await f.text();
     setContent(text);
     if (!title) setTitle(f.name.replace(/\.[^.]+$/, ''));
   };
+
+  const onImageFiles = async (files: FileList) => {
+    const arr = Array.from(files).slice(0, 8);
+    const out: SampleImageRef[] = [];
+    for (const f of arr) {
+      if (!f.type.startsWith('image/')) continue;
+      if (f.size > 4 * 1024 * 1024) {
+        toast({ title: `Image too large: ${f.name}`, description: 'Max 4MB each.', variant: 'destructive' });
+        continue;
+      }
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result as string);
+        r.onerror = () => reject(r.error);
+        r.readAsDataURL(f);
+      });
+      out.push({ dataUrl, caption: f.name });
+    }
+    setImages((prev) => [...prev, ...out]);
+  };
+
+  const updateCaption = (i: number, caption: string) => {
+    setImages((prev) => prev.map((im, idx) => idx === i ? { ...im, caption } : im));
+  };
+  const removeImage = (i: number) => setImages((prev) => prev.filter((_, idx) => idx !== i));
 
   const list = map[subject] ?? [];
 
@@ -643,7 +672,7 @@ function SamplesTab() {
             <BookMarked className="h-4 w-4" /> Add Sample Paper
           </CardTitle>
           <p className="text-xs text-muted-foreground">
-            Owner-only. Saved samples are auto-attached as references when generating papers for that subject.
+            Owner-only. Saved samples (text + image references) are auto-attached when generating papers for that subject.
           </p>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -661,10 +690,39 @@ function SamplesTab() {
             <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Board Paper March 2015" />
           </div>
           <div className="space-y-1.5">
-            <Label>Paper Content</Label>
-            <Textarea rows={8} value={content} onChange={(e) => setContent(e.target.value)} placeholder="Paste the full sample paper text here…" />
-            <Input type="file" accept=".txt,.md,text/plain" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
+            <Label>Paper Content (optional if attaching images)</Label>
+            <Textarea rows={6} value={content} onChange={(e) => setContent(e.target.value)} placeholder="Paste the full sample paper text here…" />
+            <Input type="file" accept=".txt,.md,text/plain" onChange={(e) => e.target.files?.[0] && onTextFile(e.target.files[0])} />
           </div>
+
+          <div className="space-y-1.5">
+            <Label>Reference Images ({images.length})</Label>
+            <Input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => e.target.files && onImageFiles(e.target.files)}
+            />
+            {images.length > 0 && (
+              <div className="grid grid-cols-2 gap-2 pt-2">
+                {images.map((im, i) => (
+                  <div key={i} className="border border-border rounded-md p-2 space-y-1.5">
+                    <img src={im.dataUrl} alt={im.caption ?? `ref ${i + 1}`} className="w-full h-24 object-cover rounded" />
+                    <Input
+                      value={im.caption ?? ''}
+                      onChange={(e) => updateCaption(i, e.target.value)}
+                      placeholder="Caption (e.g. Diagram for Q4)"
+                      className="h-7 text-xs"
+                    />
+                    <Button variant="ghost" size="sm" onClick={() => removeImage(i)} className="w-full h-7 text-xs">
+                      <Trash2 className="h-3 w-3 mr-1 text-destructive" />Remove
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <Button onClick={add} className="w-full"><Plus className="h-4 w-4 mr-1" />Save Sample</Button>
         </CardContent>
       </Card>
@@ -678,10 +736,22 @@ function SamplesTab() {
             <p className="text-sm text-muted-foreground">No samples yet for this subject.</p>
           )}
           {list.map((s, i) => (
-            <div key={i} className="flex items-center justify-between gap-2 p-2 rounded-md border border-border">
-              <div className="min-w-0 flex-1">
+            <div key={i} className="flex items-start justify-between gap-2 p-2 rounded-md border border-border">
+              <div className="min-w-0 flex-1 space-y-1">
                 <div className="font-medium text-sm truncate">{s.title}</div>
-                <div className="text-xs text-muted-foreground truncate">{s.content.slice(0, 80)}…</div>
+                {s.content && (
+                  <div className="text-xs text-muted-foreground truncate">{s.content.slice(0, 80)}…</div>
+                )}
+                {s.images && s.images.length > 0 && (
+                  <div className="flex gap-1 flex-wrap pt-1">
+                    {s.images.slice(0, 4).map((im, k) => (
+                      <img key={k} src={im.dataUrl} alt={im.caption ?? ''} className="h-10 w-10 object-cover rounded border border-border" />
+                    ))}
+                    {s.images.length > 4 && (
+                      <span className="text-[10px] text-muted-foreground self-end">+{s.images.length - 4}</span>
+                    )}
+                  </div>
+                )}
               </div>
               <Button variant="ghost" size="icon" onClick={() => remove(subject, i)} aria-label="Delete">
                 <Trash2 className="h-4 w-4 text-destructive" />
