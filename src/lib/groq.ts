@@ -62,9 +62,12 @@ function buildGeneratePrompt(o: GenerateOptions): string {
     ? [
         '',
         'OWNER-PROVIDED SAMPLE PAPERS (use these as the primary style/format reference):',
-        ...o.samplePapers.slice(0, 3).map((s, i) =>
-          `\n--- Sample ${i + 1}: ${s.title} ---\n${s.content.slice(0, 4000)}`
-        ),
+        ...o.samplePapers.slice(0, 3).map((s, i) => {
+          const imgNote = s.images && s.images.length
+            ? `\n[Owner attached ${s.images.length} reference image(s): ${s.images.map((im, k) => im.caption || `image ${k + 1}`).join('; ')}. Treat these as visual exemplars of layout, diagrams, and section style.]`
+            : '';
+          return `\n--- Sample ${i + 1}: ${s.title} ---${imgNote}\n${s.content.slice(0, 4000)}`;
+        }),
         '--- end samples ---',
       ].join('\n')
     : '';
