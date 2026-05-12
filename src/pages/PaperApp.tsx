@@ -18,7 +18,7 @@ import {
 import {
   generatePaper, checkPaper,
   loadSamplePapers, saveSamplePapers, OWNER_EMAIL,
-  type GenerateOptions, type SamplePapersMap,
+  type GenerateOptions, type SamplePapersMap, type SampleImageRef,
 } from '@/lib/groq';
 import { getDeferredPrompt, clearDeferredPrompt } from '@/registerSW';
 
