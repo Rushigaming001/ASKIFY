@@ -6,11 +6,20 @@ const ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/test-generat
 const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 
 export const ASKIFY_HEADER = 'ASKIFY';
+export const ASKIFY_TAGLINE = 'Welcome To The World of Possibilities';
 export const REFERRED_FOOTER = 'Referred from Maharashtra State Board Question Paper - 2015';
+
+export interface SampleImageRef {
+  /** data URL (data:image/...;base64,...) so it can be rendered offline */
+  dataUrl: string;
+  /** short caption / what this image represents (e.g. "Diagram for Q4", "Section B layout") */
+  caption?: string;
+}
 
 export interface SamplePaperRef {
   title: string;
   content: string;
+  images?: SampleImageRef[];
 }
 
 export interface GenerateOptions {
