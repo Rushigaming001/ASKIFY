@@ -13,8 +13,13 @@ import { useToast } from '@/hooks/use-toast';
 import {
   FileText, Sparkles, Loader2, Copy, Download, Printer, RefreshCw,
   History, ClipboardCheck, Trash2, LogOut, Moon, Sun, Smartphone, Check,
+  BookMarked, Plus,
 } from 'lucide-react';
-import { generatePaper, checkPaper, type GenerateOptions } from '@/lib/groq';
+import {
+  generatePaper, checkPaper,
+  loadSamplePapers, saveSamplePapers, OWNER_EMAIL,
+  type GenerateOptions, type SamplePapersMap,
+} from '@/lib/groq';
 import { getDeferredPrompt, clearDeferredPrompt } from '@/registerSW';
 
 // -------- Curriculum (Class 10 — Maharashtra State Board) --------
@@ -212,10 +217,13 @@ function PaperHome({
 
       {/* Tabs */}
       <Tabs value={tab} onValueChange={setTab} className="flex-1 flex flex-col">
-        <TabsList className="grid grid-cols-3 mx-4 mt-3">
+        <TabsList className={`grid ${email === OWNER_EMAIL ? 'grid-cols-4' : 'grid-cols-3'} mx-4 mt-3`}>
           <TabsTrigger value="generate"><Sparkles className="h-4 w-4 mr-1" />Generate</TabsTrigger>
           <TabsTrigger value="history"><History className="h-4 w-4 mr-1" />History</TabsTrigger>
           <TabsTrigger value="check"><ClipboardCheck className="h-4 w-4 mr-1" />Check</TabsTrigger>
+          {email === OWNER_EMAIL && (
+            <TabsTrigger value="samples"><BookMarked className="h-4 w-4 mr-1" />Samples</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="generate" className="flex-1 p-4">
@@ -229,6 +237,11 @@ function PaperHome({
         <TabsContent value="check" className="flex-1 p-4">
           <CheckTab />
         </TabsContent>
+        {email === OWNER_EMAIL && (
+          <TabsContent value="samples" className="flex-1 p-4">
+            <SamplesTab />
+          </TabsContent>
+        )}
       </Tabs>
 
       <footer className="text-center text-[11px] text-muted-foreground py-3">
@@ -581,6 +594,102 @@ function CheckTab() {
           </CardContent>
         </Card>
       )}
+    </div>
+  );
+}
+
+// =====================================================================
+//  Samples Tab (owner only)
+// =====================================================================
+function SamplesTab() {
+  const { toast } = useToast();
+  const [map, setMap] = useState<SamplePapersMap>(() => loadSamplePapers());
+  const [subject, setSubject] = useState<string>(SUBJECTS[0]);
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+
+  const persist = (next: SamplePapersMap) => { setMap(next); saveSamplePapers(next); };
+
+  const add = () => {
+    if (!title.trim() || !content.trim()) {
+      toast({ title: 'Title and content required', variant: 'destructive' });
+      return;
+    }
+    const next: SamplePapersMap = { ...map, [subject]: [...(map[subject] ?? []), { title: title.trim(), content: content.trim() }] };
+    persist(next);
+    setTitle(''); setContent('');
+    toast({ title: 'Sample paper saved', description: `Will be used as reference for ${subject}.` });
+  };
+
+  const remove = (subj: string, idx: number) => {
+    const list = (map[subj] ?? []).filter((_, i) => i !== idx);
+    const next = { ...map, [subj]: list };
+    persist(next);
+  };
+
+  const onFile = async (f: File) => {
+    const text = await f.text();
+    setContent(text);
+    if (!title) setTitle(f.name.replace(/\.[^.]+$/, ''));
+  };
+
+  const list = map[subject] ?? [];
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <BookMarked className="h-4 w-4" /> Add Sample Paper
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Owner-only. Saved samples are auto-attached as references when generating papers for that subject.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="space-y-1.5">
+            <Label>Subject</Label>
+            <Select value={subject} onValueChange={setSubject}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {SUBJECTS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Sample Title</Label>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Board Paper March 2015" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Paper Content</Label>
+            <Textarea rows={8} value={content} onChange={(e) => setContent(e.target.value)} placeholder="Paste the full sample paper text here…" />
+            <Input type="file" accept=".txt,.md,text/plain" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
+          </div>
+          <Button onClick={add} className="w-full"><Plus className="h-4 w-4 mr-1" />Save Sample</Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Saved samples for {subject} ({list.length})</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {list.length === 0 && (
+            <p className="text-sm text-muted-foreground">No samples yet for this subject.</p>
+          )}
+          {list.map((s, i) => (
+            <div key={i} className="flex items-center justify-between gap-2 p-2 rounded-md border border-border">
+              <div className="min-w-0 flex-1">
+                <div className="font-medium text-sm truncate">{s.title}</div>
+                <div className="text-xs text-muted-foreground truncate">{s.content.slice(0, 80)}…</div>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => remove(subject, i)} aria-label="Delete">
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
     </div>
   );
 }
