@@ -153,12 +153,16 @@ async function callAI(prompt: string): Promise<string> {
   return enforceWrapping(out);
 }
 
-/** Guarantees ASKIFY header and 2015-reference footer even if the model forgets. */
+/** Guarantees ASKIFY header, tagline, and 2015-reference footer even if the model forgets. */
 function enforceWrapping(text: string): string {
-  let out = text.trim();
-  if (!out.split('\n')[0].trim().toUpperCase().startsWith('ASKIFY')) {
-    out = `${ASKIFY_HEADER}\n${out}`;
+  const lines = text.trim().split('\n');
+  if (!lines[0]?.trim().toUpperCase().startsWith('ASKIFY')) {
+    lines.unshift(ASKIFY_HEADER);
   }
+  if (!lines[1] || !lines[1].toLowerCase().includes('welcome to the world of possibilities')) {
+    lines.splice(1, 0, ASKIFY_TAGLINE);
+  }
+  let out = lines.join('\n');
   if (!out.toLowerCase().includes('referred from')) {
     out = `${out}\n\n${REFERRED_FOOTER}`;
   }
