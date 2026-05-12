@@ -13,8 +13,13 @@ import { useToast } from '@/hooks/use-toast';
 import {
   FileText, Sparkles, Loader2, Copy, Download, Printer, RefreshCw,
   History, ClipboardCheck, Trash2, LogOut, Moon, Sun, Smartphone, Check,
+  BookMarked, Plus,
 } from 'lucide-react';
-import { generatePaper, checkPaper, type GenerateOptions } from '@/lib/groq';
+import {
+  generatePaper, checkPaper,
+  loadSamplePapers, saveSamplePapers, OWNER_EMAIL,
+  type GenerateOptions, type SamplePapersMap,
+} from '@/lib/groq';
 import { getDeferredPrompt, clearDeferredPrompt } from '@/registerSW';
 
 // -------- Curriculum (Class 10 — Maharashtra State Board) --------
