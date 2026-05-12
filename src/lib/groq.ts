@@ -6,11 +6,20 @@ const ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/test-generat
 const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 
 export const ASKIFY_HEADER = 'ASKIFY';
+export const ASKIFY_TAGLINE = 'Welcome To The World of Possibilities';
 export const REFERRED_FOOTER = 'Referred from Maharashtra State Board Question Paper - 2015';
+
+export interface SampleImageRef {
+  /** data URL (data:image/...;base64,...) so it can be rendered offline */
+  dataUrl: string;
+  /** short caption / what this image represents (e.g. "Diagram for Q4", "Section B layout") */
+  caption?: string;
+}
 
 export interface SamplePaperRef {
   title: string;
   content: string;
+  images?: SampleImageRef[];
 }
 
 export interface GenerateOptions {
@@ -53,9 +62,12 @@ function buildGeneratePrompt(o: GenerateOptions): string {
     ? [
         '',
         'OWNER-PROVIDED SAMPLE PAPERS (use these as the primary style/format reference):',
-        ...o.samplePapers.slice(0, 3).map((s, i) =>
-          `\n--- Sample ${i + 1}: ${s.title} ---\n${s.content.slice(0, 4000)}`
-        ),
+        ...o.samplePapers.slice(0, 3).map((s, i) => {
+          const imgNote = s.images && s.images.length
+            ? `\n[Owner attached ${s.images.length} reference image(s): ${s.images.map((im, k) => im.caption || `image ${k + 1}`).join('; ')}. Treat these as visual exemplars of layout, diagrams, and section style.]`
+            : '';
+          return `\n--- Sample ${i + 1}: ${s.title} ---${imgNote}\n${s.content.slice(0, 4000)}`;
+        }),
         '--- end samples ---',
       ].join('\n')
     : '';
@@ -82,8 +94,9 @@ function buildGeneratePrompt(o: GenerateOptions): string {
     o.title ? `Paper Title: ${o.title}` : '',
     '',
     'STRICT OUTPUT RULES:',
-    `- The VERY FIRST LINE must be exactly: ${ASKIFY_HEADER}`,
-    '- The second line should be the paper title / subject header.',
+    `- Line 1 must be exactly: ${ASKIFY_HEADER}`,
+    `- Line 2 must be exactly: ${ASKIFY_TAGLINE}`,
+    '- Line 3 should be the paper title / subject header.',
     '- Follow the SSC 2015 board pattern: Section A, B, C, D with correct marks split.',
     '- Auto-distribute 1-mark, 2-mark, 3-mark, 4/5-mark questions and MCQs as appropriate.',
     '- Show marks in brackets on every question, e.g. "(2 marks)".',
@@ -140,12 +153,16 @@ async function callAI(prompt: string): Promise<string> {
   return enforceWrapping(out);
 }
 
-/** Guarantees ASKIFY header and 2015-reference footer even if the model forgets. */
+/** Guarantees ASKIFY header, tagline, and 2015-reference footer even if the model forgets. */
 function enforceWrapping(text: string): string {
-  let out = text.trim();
-  if (!out.split('\n')[0].trim().toUpperCase().startsWith('ASKIFY')) {
-    out = `${ASKIFY_HEADER}\n${out}`;
+  const lines = text.trim().split('\n');
+  if (!lines[0]?.trim().toUpperCase().startsWith('ASKIFY')) {
+    lines.unshift(ASKIFY_HEADER);
   }
+  if (!lines[1] || !lines[1].toLowerCase().includes('welcome to the world of possibilities')) {
+    lines.splice(1, 0, ASKIFY_TAGLINE);
+  }
+  let out = lines.join('\n');
   if (!out.toLowerCase().includes('referred from')) {
     out = `${out}\n\n${REFERRED_FOOTER}`;
   }
@@ -171,6 +188,7 @@ export async function checkPaper(paper: string): Promise<string> {
 function localFallbackPaper(o: GenerateOptions): string {
   const date = new Date().toLocaleDateString();
   return `${ASKIFY_HEADER}
+${ASKIFY_TAGLINE}
 MAHARASHTRA STATE BOARD - CLASS 10
 Subject: ${o.subject}        Total Marks: ${o.marks}
 Date: ${date}                Difficulty: ${o.difficulty}
