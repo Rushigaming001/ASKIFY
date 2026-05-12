@@ -188,6 +188,7 @@ export async function checkPaper(paper: string): Promise<string> {
 function localFallbackPaper(o: GenerateOptions): string {
   const date = new Date().toLocaleDateString();
   return `${ASKIFY_HEADER}
+${ASKIFY_TAGLINE}
 MAHARASHTRA STATE BOARD - CLASS 10
 Subject: ${o.subject}        Total Marks: ${o.marks}
 Date: ${date}                Difficulty: ${o.difficulty}
