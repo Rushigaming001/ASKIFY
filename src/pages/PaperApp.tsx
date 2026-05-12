@@ -217,10 +217,13 @@ function PaperHome({
 
       {/* Tabs */}
       <Tabs value={tab} onValueChange={setTab} className="flex-1 flex flex-col">
-        <TabsList className="grid grid-cols-3 mx-4 mt-3">
+        <TabsList className={`grid ${email === OWNER_EMAIL ? 'grid-cols-4' : 'grid-cols-3'} mx-4 mt-3`}>
           <TabsTrigger value="generate"><Sparkles className="h-4 w-4 mr-1" />Generate</TabsTrigger>
           <TabsTrigger value="history"><History className="h-4 w-4 mr-1" />History</TabsTrigger>
           <TabsTrigger value="check"><ClipboardCheck className="h-4 w-4 mr-1" />Check</TabsTrigger>
+          {email === OWNER_EMAIL && (
+            <TabsTrigger value="samples"><BookMarked className="h-4 w-4 mr-1" />Samples</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="generate" className="flex-1 p-4">
@@ -234,6 +237,11 @@ function PaperHome({
         <TabsContent value="check" className="flex-1 p-4">
           <CheckTab />
         </TabsContent>
+        {email === OWNER_EMAIL && (
+          <TabsContent value="samples" className="flex-1 p-4">
+            <SamplesTab />
+          </TabsContent>
+        )}
       </Tabs>
 
       <footer className="text-center text-[11px] text-muted-foreground py-3">
