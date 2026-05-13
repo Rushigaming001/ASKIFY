@@ -13,12 +13,12 @@ import { useToast } from '@/hooks/use-toast';
 import {
   FileText, Sparkles, Loader2, Copy, Download, Printer, RefreshCw,
   History, ClipboardCheck, Trash2, LogOut, Moon, Sun, Smartphone, Check,
-  BookMarked, Plus,
+  BookMarked, Plus, Zap, Brain,
 } from 'lucide-react';
 import {
   generatePaper, checkPaper,
   loadSamplePapers, saveSamplePapers, OWNER_EMAIL,
-  type GenerateOptions, type SamplePapersMap, type SampleImageRef,
+  type GenerateOptions, type GenerationMode, type SamplePapersMap, type SampleImageRef,
 } from '@/lib/groq';
 import { getDeferredPrompt, clearDeferredPrompt } from '@/registerSW';
 
@@ -314,38 +314,48 @@ function GenerateTab({ onSaved }: { onSaved: (item: HistoryItem) => void }) {
   const [chapters, setChapters] = useState<string[]>([]);
   const [title, setTitle] = useState('');
   const [custom, setCustom] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<GenerationMode | null>(null);
   const [paper, setPaper] = useState<string | null>(null);
+  const [meta, setMeta] = useState<{ providersUsed?: string[]; draftCount?: number; review?: string | null; mode?: GenerationMode } | null>(null);
 
   const allChapters = useMemo(() => CURRICULUM[subject] ?? [], [subject]);
 
   const toggleChapter = (c: string) =>
     setChapters((prev) => prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]);
 
-  const run = async () => {
+  const run = async (mode: GenerationMode) => {
     if (!subject) return;
-    setLoading(true);
+    setLoading(mode);
+    const startedAt = Date.now();
     try {
       const opts: GenerateOptions = {
         subject, marks, difficulty,
         chapters: chapters.length ? chapters : allChapters,
         customInstructions: custom || undefined,
         title: title || undefined,
+        mode,
       };
-      const out = await generatePaper(opts);
-      setPaper(out);
+      const result = await generatePaper(opts);
+      setPaper(result.paper);
+      setMeta({ providersUsed: result.providersUsed, draftCount: result.draftCount, review: result.review, mode: result.mode });
       onSaved({
         id: crypto.randomUUID(),
-        title: title || `${subject} · ${marks} marks`,
+        title: title || `${subject} · ${marks} marks${mode !== 'standard' ? ` · ${mode}` : ''}`,
         subject, marks, difficulty,
         createdAt: Date.now(),
-        paper: out,
+        paper: result.paper,
       });
-      toast({ title: 'Paper generated', description: 'Saved to History.' });
+      const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
+      toast({
+        title: mode === 'quick' ? `Quick paper ready in ${seconds}s` : mode === 'thinking' ? `Masterpiece ready in ${seconds}s` : `Paper generated in ${seconds}s`,
+        description: result.providersUsed?.length
+          ? `${result.draftCount ?? result.providersUsed.length} AI(s): ${result.providersUsed.join(', ')}`
+          : 'Saved to History.',
+      });
     } catch (err) {
       toast({ title: 'Generation failed', description: err instanceof Error ? err.message : 'Unknown error', variant: 'destructive' });
     } finally {
-      setLoading(false);
+      setLoading(null);
     }
   };
 
@@ -409,17 +419,32 @@ function GenerateTab({ onSaved }: { onSaved: (item: HistoryItem) => void }) {
               rows={3} />
           </div>
 
-          <Button onClick={run} disabled={loading} className="w-full" size="lg">
-            {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Generating…</> : <><Sparkles className="h-4 w-4 mr-2" />Generate Paper</>}
-          </Button>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <Button onClick={() => run('quick')} disabled={!!loading} variant="outline" size="lg" className="border-amber-500/50 hover:bg-amber-500/10">
+              {loading === 'quick' ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Zap className="h-4 w-4 mr-2 text-amber-500" />}
+              Quick (&lt;10s)
+            </Button>
+            <Button onClick={() => run('standard')} disabled={!!loading} size="lg">
+              {loading === 'standard' ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
+              Multi-AI Generate
+            </Button>
+            <Button onClick={() => run('thinking')} disabled={!!loading} variant="outline" size="lg" className="border-violet-500/50 hover:bg-violet-500/10">
+              {loading === 'thinking' ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Brain className="h-4 w-4 mr-2 text-violet-500" />}
+              Thinking (Masterpiece)
+            </Button>
+          </div>
+          <p className="text-[11px] text-muted-foreground text-center">
+            Quick = 1 fast AI · Multi-AI = 3-4 AIs merged · Thinking = all AIs + master synthesis + auto-review
+          </p>
         </CardContent>
       </Card>
 
       {paper && (
         <PaperView
           paper={paper}
-          onRegenerate={run}
-          regenLoading={loading}
+          meta={meta}
+          onRegenerate={() => run(meta?.mode ?? 'standard')}
+          regenLoading={!!loading}
         />
       )}
     </div>
@@ -429,8 +454,9 @@ function GenerateTab({ onSaved }: { onSaved: (item: HistoryItem) => void }) {
 // =====================================================================
 //  Paper Result View
 // =====================================================================
-function PaperView({ paper, onRegenerate, regenLoading }: {
+function PaperView({ paper, onRegenerate, regenLoading, meta }: {
   paper: string; onRegenerate?: () => void; regenLoading?: boolean;
+  meta?: { providersUsed?: string[]; draftCount?: number; review?: string | null; mode?: GenerationMode } | null;
 }) {
   const { toast } = useToast();
 
@@ -474,8 +500,26 @@ function PaperView({ paper, onRegenerate, regenLoading }: {
           )}
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-3">
+        {meta?.providersUsed && meta.providersUsed.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+            <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+              {meta.mode === 'thinking' ? '🧠 Masterpiece' : meta.mode === 'quick' ? '⚡ Quick' : '✨ Multi-AI'}
+            </span>
+            <span className="text-muted-foreground">
+              {meta.draftCount ?? meta.providersUsed.length} AI(s): {meta.providersUsed.join(' · ')}
+            </span>
+          </div>
+        )}
         <pre className="text-sm whitespace-pre-wrap font-mono bg-muted/40 p-3 rounded-md max-h-[60vh] overflow-auto">{paper}</pre>
+        {meta?.review && (
+          <div className="space-y-1.5">
+            <div className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+              <ClipboardCheck className="h-3 w-3" /> Auto-Review
+            </div>
+            <pre className="text-xs whitespace-pre-wrap font-mono bg-violet-500/5 border border-violet-500/20 p-2 rounded-md">{meta.review}</pre>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

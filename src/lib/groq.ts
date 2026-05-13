@@ -22,6 +22,8 @@ export interface SamplePaperRef {
   images?: SampleImageRef[];
 }
 
+export type GenerationMode = 'quick' | 'standard' | 'thinking';
+
 export interface GenerateOptions {
   subject: string;
   marks: string;
@@ -31,6 +33,16 @@ export interface GenerateOptions {
   title?: string;
   /** Owner-curated sample papers used as exemplars for this subject. */
   samplePapers?: SamplePaperRef[];
+  /** quick = single fastest AI; standard = 3-4 AIs merged; thinking = all AIs + masterpiece review */
+  mode?: GenerationMode;
+}
+
+export interface GenerateResult {
+  paper: string;
+  mode: GenerationMode;
+  providersUsed?: string[];
+  draftCount?: number;
+  review?: string | null;
 }
 
 const SAMPLE_PAPERS_KEY = 'paperapp.samplePapers.v1';
@@ -131,7 +143,7 @@ function buildCheckPrompt(paper: string): string {
   ].join('\n');
 }
 
-async function callAI(prompt: string): Promise<string> {
+async function callAI(prompt: string, mode?: GenerationMode): Promise<{ text: string; meta: Omit<GenerateResult, 'paper' | 'mode'> & { mode?: string } }> {
   const res = await fetch(ENDPOINT, {
     method: 'POST',
     headers: {
@@ -139,7 +151,7 @@ async function callAI(prompt: string): Promise<string> {
       Authorization: `Bearer ${ANON_KEY}`,
       apikey: ANON_KEY,
     },
-    body: JSON.stringify({ prompt }),
+    body: JSON.stringify({ prompt, mode }),
   });
 
   if (!res.ok) {
@@ -150,7 +162,10 @@ async function callAI(prompt: string): Promise<string> {
   const data = await res.json();
   const out = (data.paper || data.result || data.text || '').toString().trim();
   if (!out) throw new Error('AI returned an empty response.');
-  return enforceWrapping(out);
+  return {
+    text: enforceWrapping(out),
+    meta: { providersUsed: data.providersUsed, draftCount: data.draftCount, review: data.review, mode: data.mode },
+  };
 }
 
 /** Guarantees ASKIFY header, tagline, and 2015-reference footer even if the model forgets. */
@@ -169,20 +184,23 @@ function enforceWrapping(text: string): string {
   return out;
 }
 
-export async function generatePaper(opts: GenerateOptions): Promise<string> {
+export async function generatePaper(opts: GenerateOptions): Promise<GenerateResult> {
+  const mode: GenerationMode = opts.mode ?? 'standard';
   // Auto-attach owner sample papers for the subject if none explicitly passed.
   const samples = opts.samplePapers ?? getSamplesForSubject(opts.subject);
   const merged: GenerateOptions = { ...opts, samplePapers: samples };
   try {
-    return await callAI(buildGeneratePrompt(merged));
+    const { text, meta } = await callAI(buildGeneratePrompt(merged), mode);
+    return { paper: text, mode, providersUsed: meta.providersUsed, draftCount: meta.draftCount, review: meta.review };
   } catch (err) {
     console.error('[groq] generate failed, using local fallback:', err);
-    return enforceWrapping(localFallbackPaper(merged));
+    return { paper: enforceWrapping(localFallbackPaper(merged)), mode };
   }
 }
 
 export async function checkPaper(paper: string): Promise<string> {
-  return callAI(buildCheckPrompt(paper));
+  const { text } = await callAI(buildCheckPrompt(paper));
+  return text;
 }
 
 function localFallbackPaper(o: GenerateOptions): string {
