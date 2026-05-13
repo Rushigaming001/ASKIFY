@@ -454,8 +454,9 @@ function GenerateTab({ onSaved }: { onSaved: (item: HistoryItem) => void }) {
 // =====================================================================
 //  Paper Result View
 // =====================================================================
-function PaperView({ paper, onRegenerate, regenLoading }: {
+function PaperView({ paper, onRegenerate, regenLoading, meta }: {
   paper: string; onRegenerate?: () => void; regenLoading?: boolean;
+  meta?: { providersUsed?: string[]; draftCount?: number; review?: string | null; mode?: GenerationMode } | null;
 }) {
   const { toast } = useToast();
 
@@ -499,8 +500,26 @@ function PaperView({ paper, onRegenerate, regenLoading }: {
           )}
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-3">
+        {meta?.providersUsed && meta.providersUsed.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+            <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+              {meta.mode === 'thinking' ? '🧠 Masterpiece' : meta.mode === 'quick' ? '⚡ Quick' : '✨ Multi-AI'}
+            </span>
+            <span className="text-muted-foreground">
+              {meta.draftCount ?? meta.providersUsed.length} AI(s): {meta.providersUsed.join(' · ')}
+            </span>
+          </div>
+        )}
         <pre className="text-sm whitespace-pre-wrap font-mono bg-muted/40 p-3 rounded-md max-h-[60vh] overflow-auto">{paper}</pre>
+        {meta?.review && (
+          <div className="space-y-1.5">
+            <div className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+              <ClipboardCheck className="h-3 w-3" /> Auto-Review
+            </div>
+            <pre className="text-xs whitespace-pre-wrap font-mono bg-violet-500/5 border border-violet-500/20 p-2 rounded-md">{meta.review}</pre>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
