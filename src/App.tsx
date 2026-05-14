@@ -120,6 +120,7 @@ const App = () => {
                     <Route path="/reel-viewer" element={<ReelViewer />} />
                     <Route path="/cashout" element={<Cashout />} />
                     <Route path="/shop" element={<Shop />} />
+                    <Route path="/board-intelligence" element={<BoardIntelligence />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </ChatProvider>
