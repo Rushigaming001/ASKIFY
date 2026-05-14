@@ -1536,6 +1536,134 @@ export type Database = {
           },
         ]
       }
+      ssc_access_passes: {
+        Row: {
+          code_hash: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          label: string
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string
+        }
+        Relationships: []
+      }
+      ssc_board_papers: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_featured: boolean
+          pdf_url: string | null
+          subject: string
+          title: string
+          updated_at: string
+          uploaded_by: string | null
+          year: number
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_featured?: boolean
+          pdf_url?: string | null
+          subject: string
+          title: string
+          updated_at?: string
+          uploaded_by?: string | null
+          year: number
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_featured?: boolean
+          pdf_url?: string | null
+          subject?: string
+          title?: string
+          updated_at?: string
+          uploaded_by?: string | null
+          year?: number
+        }
+        Relationships: []
+      }
+      ssc_paper_analyses: {
+        Row: {
+          chapter_weightage: Json
+          generated_at: string
+          id: string
+          important_concepts: Json
+          paper_ids: string[]
+          repeated_questions: Json
+          subject: string
+          trends: Json
+        }
+        Insert: {
+          chapter_weightage?: Json
+          generated_at?: string
+          id?: string
+          important_concepts?: Json
+          paper_ids?: string[]
+          repeated_questions?: Json
+          subject: string
+          trends?: Json
+        }
+        Update: {
+          chapter_weightage?: Json
+          generated_at?: string
+          id?: string
+          important_concepts?: Json
+          paper_ids?: string[]
+          repeated_questions?: Json
+          subject?: string
+          trends?: Json
+        }
+        Relationships: []
+      }
+      ssc_paper_views: {
+        Row: {
+          id: string
+          paper_id: string
+          user_id: string
+          viewed_at: string
+        }
+        Insert: {
+          id?: string
+          paper_id: string
+          user_id: string
+          viewed_at?: string
+        }
+        Update: {
+          id?: string
+          paper_id?: string
+          user_id?: string
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ssc_paper_views_paper_id_fkey"
+            columns: ["paper_id"]
+            isOneToOne: false
+            referencedRelation: "ssc_board_papers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stories: {
         Row: {
           caption: string | null
@@ -1937,6 +2065,10 @@ export type Database = {
         Args: { _action_type: string; _user_id: string }
         Returns: undefined
       }
+      set_ssc_access_pass: {
+        Args: { _code: string; _label?: string }
+        Returns: boolean
+      }
       transfer_coins: {
         Args: { _amount: number; _from_user_id: string; _to_user_id: string }
         Returns: boolean
@@ -1945,6 +2077,7 @@ export type Database = {
         Args: { _restriction_type: string; _user_id: string }
         Returns: boolean
       }
+      verify_ssc_access_pass: { Args: { _code: string }; Returns: boolean }
     }
     Enums: {
       app_role:

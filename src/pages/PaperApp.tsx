@@ -205,6 +205,9 @@ function PaperHome({
           </div>
         </div>
         <div className="flex items-center gap-1">
+          <Button variant="outline" size="sm" onClick={() => { window.location.href = '/board-intelligence'; }} className="text-[11px] h-8">
+            <Sparkles className="h-3.5 w-3.5 mr-1" /> Board Intel
+          </Button>
           <InstallButton />
           <Button variant="ghost" size="icon" onClick={() => setDark(!dark)} aria-label="Toggle theme">
             {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}

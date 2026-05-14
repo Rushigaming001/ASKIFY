@@ -41,6 +41,7 @@ const ReelViewer = lazy(() => import("./pages/ReelViewer"));
 const Cashout = lazy(() => import("./pages/Cashout"));
 const Shop = lazy(() => import("./pages/Shop"));
 const PaperApp = lazy(() => import("./pages/PaperApp"));
+const BoardIntelligence = lazy(() => import("./pages/BoardIntelligence"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -119,6 +120,7 @@ const App = () => {
                     <Route path="/reel-viewer" element={<ReelViewer />} />
                     <Route path="/cashout" element={<Cashout />} />
                     <Route path="/shop" element={<Shop />} />
+                    <Route path="/board-intelligence" element={<BoardIntelligence />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </ChatProvider>
