@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+// framer-motion not installed in this project — use plain divs
+const motion = { div: (props: any) => <div {...props} /> } as any;
+const AnimatePresence = ({ children }: { children: React.ReactNode; mode?: string }) => <>{children}</>;
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
