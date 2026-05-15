@@ -76,6 +76,22 @@ export default function BoardIntelligence() {
       <div className="max-w-6xl mx-auto px-4 py-6 relative">
         {!unlocked && <AccessGate onUnlock={() => setShowUnlock(true)} />}
 
+        {isOwner && (
+          <Card className="mb-4 border-amber-500/40 bg-gradient-to-br from-amber-500/10 to-background/60 backdrop-blur">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <SettingsIcon className="h-4 w-4 text-amber-500" /> Owner Quick Access — Set / Rotate Access Pass
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <OwnerPassQuickSet />
+              <p className="text-[11px] text-muted-foreground mt-2">
+                Share this pass with users who should unlock Board Intelligence. The full Owner panel (upload papers, manage list) is in the ⚙️ Owner tab below.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
         <div className={unlocked ? '' : 'pointer-events-none blur-md select-none'}>
           <Tabs defaultValue="papers" className="space-y-4">
             <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 h-auto bg-muted/40 backdrop-blur">
@@ -83,7 +99,7 @@ export default function BoardIntelligence() {
               <TabsTrigger value="repeated" className="text-xs sm:text-sm">🔁 Most Repeated</TabsTrigger>
               <TabsTrigger value="predict" className="text-xs sm:text-sm">🔮 2027 Predictor</TabsTrigger>
               <TabsTrigger value="history" className="text-xs sm:text-sm">🕘 History</TabsTrigger>
-              {isOwner && <TabsTrigger value="owner" className="text-xs sm:text-sm">⚙️ Owner</TabsTrigger>}
+              {isOwner && <TabsTrigger value="owner" className="text-xs sm:text-sm bg-amber-500/20 data-[state=active]:bg-amber-500/40">⚙️ Owner</TabsTrigger>}
             </TabsList>
 
             <TabsContent value="papers"><BoardPapersGrid loading={loading} papers={papers} reload={async () => setPapers(await listPapers())} /></TabsContent>
