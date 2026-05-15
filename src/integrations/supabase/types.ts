@@ -1570,6 +1570,7 @@ export type Database = {
           id: string
           is_featured: boolean
           pdf_url: string | null
+          series: string
           subject: string
           title: string
           updated_at: string
@@ -1582,6 +1583,7 @@ export type Database = {
           id?: string
           is_featured?: boolean
           pdf_url?: string | null
+          series?: string
           subject: string
           title: string
           updated_at?: string
@@ -1594,6 +1596,7 @@ export type Database = {
           id?: string
           is_featured?: boolean
           pdf_url?: string | null
+          series?: string
           subject?: string
           title?: string
           updated_at?: string
