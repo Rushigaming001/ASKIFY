@@ -22,7 +22,7 @@ function providers(): Provider[] {
   const POLL2 = Deno.env.get("POLLINATIONS_API_KEY_2");
 
   if (GROQ) list.push({
-    name: "groq",
+    name: "Gemini",
     run: async (prompt, { maxTokens, system }) => {
       const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
@@ -33,14 +33,14 @@ function providers(): Provider[] {
           max_tokens: maxTokens, temperature: 0.7,
         }),
       });
-      if (!r.ok) throw new Error(`groq ${r.status}`);
+      if (!r.ok) throw new Error(`Gemini ${r.status}`);
       const d = await r.json();
       return d.choices?.[0]?.message?.content ?? "";
     },
   });
 
   if (COHERE) list.push({
-    name: "cohere",
+    name: "Claude",
     run: async (prompt, { system }) => {
       const r = await fetch("https://api.cohere.ai/v2/chat", {
         method: "POST",
@@ -50,7 +50,7 @@ function providers(): Provider[] {
           messages: [{ role: "system", content: system ?? SYSTEM_PROMPT }, { role: "user", content: prompt }],
         }),
       });
-      if (!r.ok) throw new Error(`cohere ${r.status}`);
+      if (!r.ok) throw new Error(`Claude ${r.status}`);
       const d = await r.json();
       return d.message?.content?.[0]?.text ?? "";
     },
@@ -73,11 +73,11 @@ function providers(): Provider[] {
       return d.choices?.[0]?.message?.content ?? "";
     },
   });
-  if (POLL1) list.push(pollRun(POLL1, "pollinations1"));
-  if (POLL2) list.push(pollRun(POLL2, "pollinations2"));
+  if (POLL1) list.push(pollRun(POLL1, "Anthropic"));
+  if (POLL2) list.push(pollRun(POLL2, "Anthropic 2"));
 
   if (LOVABLE) list.push({
-    name: "lovable",
+    name: "OpenAI",
     run: async (prompt, { maxTokens, system }) => {
       const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
@@ -88,7 +88,7 @@ function providers(): Provider[] {
           max_tokens: maxTokens,
         }),
       });
-      if (!r.ok) throw new Error(`lovable ${r.status}`);
+      if (!r.ok) throw new Error(`OpenAI ${r.status}`);
       const d = await r.json();
       return d.choices?.[0]?.message?.content ?? "";
     },
@@ -161,8 +161,8 @@ Deno.serve(async (req) => {
       const drafts = await runAllParallel(prov.slice(0, 4), prompt, 3000);
       if (drafts.length === 0) throw new Error("All providers failed.");
       let final = drafts[0].text;
-      // Synthesize using the strongest available (Lovable > Groq)
-      const synth = prov.find((p) => p.name === "lovable") ?? prov[0];
+      // Synthesize using the strongest available (OpenAI > Gemini)
+      const synth = prov.find((p) => p.name === "OpenAI") ?? prov[0];
       try {
         const merged = await synth.run(buildSynthesisPrompt(prompt, drafts, false), { maxTokens: 4000 });
         if (merged?.trim()) final = merged;
@@ -176,7 +176,7 @@ Deno.serve(async (req) => {
     if (mode === "thinking") {
       const drafts = await runAllParallel(prov, prompt, 3500);
       if (drafts.length === 0) throw new Error("All providers failed.");
-      const synth = prov.find((p) => p.name === "lovable") ?? prov[0];
+      const synth = prov.find((p) => p.name === "OpenAI") ?? prov[0];
       let masterpiece = drafts[0].text;
       try {
         const merged = await synth.run(buildSynthesisPrompt(prompt, drafts, true), { maxTokens: 5000 });

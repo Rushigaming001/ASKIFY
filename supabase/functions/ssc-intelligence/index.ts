@@ -1,5 +1,5 @@
 // SSC Board Paper Intelligence — analyze, predict, inject creative-question styles.
-// Uses Lovable AI Gateway. All actions require authenticated callers (verify_jwt = true).
+// Powered by OpenAI / Gemini / Claude / Anthropic. All actions require authenticated callers.
 
 const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -144,45 +144,76 @@ async function analyze(subject: Subject, papers: PaperRef[]) {
 
 // ----- Action: predict -----
 async function predict(subject: Subject, targetYear: number, analysis: any, papers: PaperRef[]) {
-  const sample = papers.find((p) => p.content && p.content.length > 500);
-  const styleSample = sample ? `\n\nReference layout from ${sample.year}:\n${sample.content.slice(0, 2500)}` : "";
-  const trendsTxt = (analysis?.trends || []).slice(0, 12).map((t: string) => `- ${t}`).join("\n") || "(no trends supplied)";
-  const conceptsTxt = (analysis?.importantConcepts || []).slice(0, 15).map((t: string) => `- ${t}`).join("\n") || "(none)";
-  const repeatedTxt = (analysis?.repeatedQuestions || []).slice(0, 12)
+  const usable = papers.filter((p) => p.content && p.content.trim().length > 200);
+  const yearsWithContent = usable.map((p) => p.year).sort();
+  const allYears = Array.from({ length: 12 }, (_, i) => 2015 + i); // 2015..2026
+  const samples = usable
+    .slice(0, 6) // up to 6 reference papers across years
+    .map((p) => `### Reference — ${p.year} ${p.subject}\n${p.content.slice(0, 2200)}`)
+    .join("\n\n---\n\n");
+  const trendsTxt = (analysis?.trends || []).slice(0, 15).map((t: string) => `- ${t}`).join("\n") || "(no trends supplied — use your knowledge of Maharashtra SSC pattern)";
+  const conceptsTxt = (analysis?.importantConcepts || []).slice(0, 20).map((t: string) => `- ${t}`).join("\n") || "(use full SSC syllabus)";
+  const repeatedTxt = (analysis?.repeatedQuestions || []).slice(0, 15)
     .map((q: any) => `- [${q.chapter}] ${q.question} (asked ${q.frequency}× — ${q.tag || "Important"})`)
-    .join("\n") || "(none)";
+    .join("\n") || "(use repeated SSC patterns from 2015–2026)";
+
+  const blueprint = subject.startsWith("Mathematics")
+    ? "MATHEMATICS BLUEPRINT (40 marks): Q1 MCQ (4×1=4), Q1B fill-blanks/short (4×1=4), Q2A complete activity (3×2=6), Q2B solve (3×2=6), Q3A activity (2×3=6), Q3B solve (3×3=9), Q4 (2×4=8), Q5 challenging (1×3=3). Total ≈ 46 questions to choose ≈ 40 marks."
+    : subject === "English"
+    ? "ENGLISH BLUEPRINT (80 marks): Section A Reading Skills (Seen + Unseen passages, 20m), Section B Writing Skills (Letter, Speech, Report, Appeal, View-counterview, Information transfer, 20m), Section C Poetry (Appreciation + comprehension, 10m), Section D Genre Novel/Drama (10m), Section E Grammar & Vocabulary (20m)."
+    : "SCIENCE BLUEPRINT (40 marks): Q1A MCQ (5×1=5), Q1B one-word/match (5×1=5), Q2A complete chart/diagram (3×2=6), Q2B short answer (3×2=6), Q3 (5×3=15), Q4 long answer (1×5=5). Include diagram-based and reasoning questions.";
 
   const json = await callGateway([
     {
       role: "system",
       content:
-        "You are a senior Maharashtra SSC board paper setter. Generate a realistic full-length predicted paper that mirrors the official SSC blueprint, language, and layout. Do not include answers. Output plain text only — no markdown.",
+        "You are the senior Maharashtra State Board (SSC) paper setter with 15+ years of experience. You have studied EVERY board paper from 2015 through 2026 across English, Mathematics 1, Mathematics 2, Science 1 and Science 2. Generate a COMPLETE, full-length, exam-grade predicted paper that strictly follows the official SSC blueprint, language, formatting, mark distribution and section layout. Every question must be MEANINGFUL, syllabus-accurate, classroom-tested, and worth its marks — no filler, no vague prompts, no off-syllabus content. Do NOT include answers. Output PLAIN TEXT ONLY (no markdown, no asterisks, no code fences).",
     },
     {
       role: "user",
       content:
-`Predicted Paper for: ${targetYear} — Subject: ${subject}
+`Generate the FULL predicted SSC board paper for ${targetYear} — Subject: ${subject}.
 
-Begin with these EXACT lines (no changes):
+You MUST draw patterns, repeated questions, weightage and difficulty from ALL Maharashtra SSC board papers across the years 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 and 2026 — NOT only one year. Reference papers actually uploaded so far cover years: ${yearsWithContent.length ? yearsWithContent.join(", ") : "none uploaded — rely entirely on your training knowledge of SSC papers across 2015–2026"}. For the remaining years (${allYears.filter((y) => !yearsWithContent.includes(y)).join(", ") || "none"}) use your historical knowledge of Maharashtra SSC board papers and chapter weightage.
+
+${blueprint}
+
+Begin the output with these EXACT lines (do not modify):
 ASKIFY
 Welcome To The World of Possibilities
 SSC BOARD ${targetYear} (Predicted) — ${subject}
+Time: 2 Hours                                          Total Marks: ${subject === "English" ? 80 : 40}
+General Instructions:
+(i) All questions are compulsory.
+(ii) Use of calculator is not allowed.
+(iii) Figures to the right indicate full marks.
+(iv) Draw neat, labelled diagrams wherever necessary.
 
-Use these board trends:
+Then produce the COMPLETE paper, properly sectioned (Q1, Q2, Q3 ...), with sub-parts (A), (B) and clear marks in brackets at the end of each question, e.g. (3 marks). Cover the FULL syllabus chapters with realistic weightage based on the historical pattern.
+
+Use these board trends from 2015–2026:
 ${trendsTxt}
 
-Prioritize these high-frequency questions and concepts:
+Prioritize these high-frequency / repeated questions across years:
 ${repeatedTxt}
 
 Important concepts to weave in:
 ${conceptsTxt}
 
-Inject 3 creative-style questions clearly labeled with one of: ${CREATIVE_STYLES.join(", ")}.
-Show marks in brackets e.g. (3 marks). End the paper with the EXACT line:
+Inject EXACTLY 3 creative-style bonus questions clearly tagged with one of: ${CREATIVE_STYLES.join(", ")} — placed naturally inside relevant sections, not at the end.
+
+End the paper with the EXACT line (no changes):
 Referred from Maharashtra State Board Question Papers 2015–2026
-${styleSample}`,
+
+Hard rules:
+- Total questions and marks must EXACTLY match the blueprint.
+- Every question must be meaningful, exam-ready, syllabus-accurate.
+- No placeholder text, no "TBD", no half-questions, no duplicates.
+- Diagrams referenced must make sense (you may write "[Diagram: ...]").
+
+${samples ? `Reference layouts from real uploaded papers:\n\n${samples}` : ""}`,
     },
-  ], { model: STRONG_MODEL, maxTokens: 3500 });
+  ], { model: STRONG_MODEL, maxTokens: 7000 });
 
   return { paper: extractText(json), targetYear, subject };
 }
