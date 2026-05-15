@@ -19,9 +19,9 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { OWNER_EMAIL } from '@/lib/groq';
 import {
-  SSC_SUBJECTS, SSC_YEARS, sscAccess, listPapers, upsertPaper, deletePaper,
+  SSC_SUBJECTS, SSC_YEARS, SSC_SERIES, sscAccess, listPapers, upsertPaper, deletePaper,
   recordView, listHistory, analyzeSubject, predictPaper, cacheAnalysis, loadCachedAnalysis,
-  type BoardPaper, type SscSubject, type AnalysisResult,
+  type BoardPaper, type SscSubject, type SscSeries, type AnalysisResult,
 } from '@/lib/sscIntel';
 
 export default function BoardIntelligence() {
@@ -472,6 +472,7 @@ function OwnerSettings({ papers, reload }: { papers: BoardPaper[]; reload: () =>
   const [pass, setPass] = useState('');
   const [year, setYear] = useState<number>(2026);
   const [subject, setSubject] = useState<SscSubject>('Mathematics 1');
+  const [series, setSeries] = useState<SscSeries>('March');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [pdfUrl, setPdfUrl] = useState('');
@@ -491,7 +492,7 @@ function OwnerSettings({ papers, reload }: { papers: BoardPaper[]; reload: () =>
   async function savePaper() {
     if (!title.trim()) { toast({ title: 'Title required', variant: 'destructive' }); return; }
     setSavingPaper(true);
-    const out = await upsertPaper({ year, subject, title: title.trim(), content, pdf_url: pdfUrl || null, is_featured: featured });
+    const out = await upsertPaper({ year, subject, series, title: title.trim(), content, pdf_url: pdfUrl || null, is_featured: featured });
     setSavingPaper(false);
     if (out) { toast({ title: 'Paper saved' }); setTitle(''); setContent(''); setPdfUrl(''); setFeatured(false); await reload(); }
     else toast({ title: 'Save failed', variant: 'destructive' });
@@ -520,10 +521,14 @@ function OwnerSettings({ papers, reload }: { papers: BoardPaper[]; reload: () =>
       <Card className="bg-background/60 backdrop-blur">
         <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Upload className="h-4 w-4" /> Upload / Replace Paper</CardTitle></CardHeader>
         <CardContent className="space-y-2">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>{SSC_YEARS.slice().reverse().map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={series} onValueChange={(v) => setSeries(v as SscSeries)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{SSC_SERIES.map((s) => <SelectItem key={s} value={s}>{s} series</SelectItem>)}</SelectContent>
             </Select>
             <Select value={subject} onValueChange={(v) => setSubject(v as SscSubject)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
@@ -548,7 +553,7 @@ function OwnerSettings({ papers, reload }: { papers: BoardPaper[]; reload: () =>
               {papers.map((p) => (
                 <div key={p.id} className="flex items-center justify-between text-xs border border-border/40 rounded-md p-2">
                   <div className="flex-1 truncate">
-                    <span className="font-mono">{p.year}</span> · {p.subject}
+                    <span className="font-mono">{p.year}</span> · <Badge variant="outline" className="text-[10px]">{p.series}</Badge> · {p.subject}
                     {!p.content && <Badge variant="secondary" className="ml-2 text-[10px]">empty</Badge>}
                     {p.is_featured && <Star className="inline h-3 w-3 ml-1 text-yellow-500 fill-yellow-500" />}
                   </div>
