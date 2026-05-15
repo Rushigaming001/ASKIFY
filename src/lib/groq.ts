@@ -1,6 +1,6 @@
 // Reusable AI wrapper for the Paper Generator mini-app.
 // Calls the Supabase `test-generator` edge function, which tries Groq first
-// (fastest), then falls back through Cohere / Pollinations / Lovable AI.
+// (fastest), then falls back through Claude / Anthropic / OpenAI / Gemini.
 
 const ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/test-generator`;
 const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
