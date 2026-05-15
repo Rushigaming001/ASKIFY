@@ -394,14 +394,52 @@ function PredictorPanel({ papers }: { papers: BoardPaper[] }) {
       <AnimatePresence mode="wait">
         {paper && (
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-            <Card className="bg-background/60 backdrop-blur">
-              <CardContent className="p-4">
-                <pre className="text-xs whitespace-pre-wrap font-mono leading-relaxed max-h-[60vh] overflow-auto">{paper}</pre>
+            <Card className="bg-background/80 backdrop-blur shadow-xl border-primary/20">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-base">📄 Predicted Paper — {targetYear} {subject}</CardTitle>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(paper); toast({ title: 'Copied to clipboard' }); }}>
+                    <Copy className="h-3.5 w-3.5 mr-1" /> Copy
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={download}>
+                    <Download className="h-3.5 w-3.5 mr-1" /> Download
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 rounded-b-xl">
+                  <div className="max-h-[75vh] overflow-auto px-6 sm:px-10 py-8">
+                    <pre className="whitespace-pre-wrap font-serif text-[15px] sm:text-[17px] leading-[1.9] tracking-[0.005em]">{paper}</pre>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+// ---------- Owner Quick Pass Setter ----------
+function OwnerPassQuickSet() {
+  const { toast } = useToast();
+  const [pass, setPass] = useState('');
+  const [saving, setSaving] = useState(false);
+  async function save() {
+    if (pass.trim().length < 4) { toast({ title: 'Pass must be at least 4 characters', variant: 'destructive' }); return; }
+    setSaving(true);
+    const ok = await sscAccess.setPass(pass.trim());
+    setSaving(false);
+    if (ok) { toast({ title: 'Access pass saved', description: 'Share this code with users who need access.' }); setPass(''); }
+    else toast({ title: 'Failed to save pass', variant: 'destructive' });
+  }
+  return (
+    <div className="flex gap-2">
+      <Input type="text" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="Enter new access pass (min 4 characters)" className="flex-1" />
+      <Button onClick={save} disabled={saving} className="bg-amber-600 hover:bg-amber-700 text-white">
+        {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Lock className="h-4 w-4 mr-1" />} Save Pass
+      </Button>
     </div>
   );
 }
