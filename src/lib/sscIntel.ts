@@ -7,11 +7,14 @@ export const SSC_SUBJECTS: SscSubject[] = [
 ];
 
 export const SSC_YEARS = Array.from({ length: 12 }, (_, i) => 2015 + i); // 2015..2026
+export type SscSeries = 'March' | 'July';
+export const SSC_SERIES: SscSeries[] = ['March', 'July'];
 
 export interface BoardPaper {
   id: string;
   year: number;
   subject: SscSubject;
+  series: SscSeries;
   title: string;
   content: string;
   pdf_url: string | null;
@@ -69,16 +72,16 @@ export async function listPapers(): Promise<BoardPaper[]> {
   return (data || []) as BoardPaper[];
 }
 
-export async function upsertPaper(p: Partial<BoardPaper> & { year: number; subject: SscSubject; title: string }): Promise<BoardPaper | null> {
+export async function upsertPaper(p: Partial<BoardPaper> & { year: number; subject: SscSubject; series: SscSeries; title: string }): Promise<BoardPaper | null> {
   const { data: { user } } = await supabase.auth.getUser();
-  const payload = {
-    year: p.year, subject: p.subject, title: p.title,
+  const payload: any = {
+    year: p.year, subject: p.subject, series: p.series, title: p.title,
     content: p.content ?? '', pdf_url: p.pdf_url ?? null,
     is_featured: p.is_featured ?? false, uploaded_by: user?.id ?? null,
   };
   const { data, error } = await supabase
     .from('ssc_board_papers')
-    .upsert(payload, { onConflict: 'year,subject' })
+    .upsert(payload, { onConflict: 'year,subject,series' })
     .select().single();
   if (error) { console.error(error); return null; }
   return data as BoardPaper;
